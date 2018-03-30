@@ -29,6 +29,7 @@
     <ClInclude Include="CymShiftJisString.hpp" />
     <ClInclude Include="CymStack.hpp" />
     <ClInclude Include="CymStringConverter.hpp" />
+    <ClInclude Include="CymStringOperation.hpp" />
     <ClInclude Include="CymStringView.hpp" />
     <ClInclude Include="CymU8String.hpp" />
     <ClInclude Include="CymVector.hpp" />

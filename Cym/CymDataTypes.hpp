@@ -5,6 +5,7 @@
 #include<type_traits>
 
 #include"CymVector.hpp"
+#include"CymStringOperation.hpp"
 
 namespace cym {
 	enum struct Endian {
@@ -19,6 +20,13 @@ namespace cym {
 		}
 	}
 	const Endian native_endian = impl::check();
+
+
+	struct Ward {
+		enum {
+
+		};
+	};
 
 
 	using Str = std::u16string;
@@ -40,14 +48,8 @@ namespace cym {
 		} data;
 		Command(Id i, std::uint32_t d1, std::uint32_t d2) {
 			id = i;
-			if (native_endian == Endian::BIG) {
-				data.i32[0] = d1;
-				data.i32[1] = d2;
-			}
-			else {
-				data.i32[0] = d1;
-				data.i32[1] = d2;
-			}
+			data.i32[0] = d1;
+			data.i32[1] = d2;
 		}
 	};
 
