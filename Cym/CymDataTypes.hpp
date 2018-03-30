@@ -1,0 +1,130 @@
+#ifndef CYM_DATA_TYPES_HPP
+#define CYM_DATA_TYPES_HPP
+
+#include<sstream>
+#include<type_traits>
+
+#include"CymVector.hpp"
+
+namespace cym {
+	enum struct Endian {
+		BIG,
+		LITTLE
+	};
+	namespace impl {
+		Endian check() {
+			std::uint8_t buf[2];
+			*static_cast<std::uint16_t*>(static_cast<void*>(buf)) = 0xAAFF;
+			return buf[0] == 0xAA ? Endian::BIG : Endian::LITTLE;
+		}
+	}
+	const Endian native_endian = impl::check();
+
+
+	using Str = std::u16string;
+	using StrView = std::u16string_view;
+	using Stream = std::basic_stringstream<char16_t>;
+	struct Command {
+		enum Id {
+			// Allocate memory of class(member value's memory). 
+			ALLOC_CLASS, // index of Vector<ParamPos>,index of ClassInfo
+			SUBSTITUTE, // index of Vector<ParamPos>,data
+		} id;
+		constexpr static char16_t* table[] = {
+			u"ALLOC_CLASS",
+			u"SUBSTITUTE",
+		};
+		union Data {
+			std::int32_t i32[2];
+			std::uint64_t u64;
+		} data;
+		Command(Id i, std::uint32_t d1, std::uint32_t d2) {
+			id = i;
+			if (native_endian == Endian::BIG) {
+				data.i32[0] = d1;
+				data.i32[1] = d2;
+			}
+			else {
+				data.i32[0] = d1;
+				data.i32[1] = d2;
+			}
+		}
+	};
+
+	struct FuncIdentifier {
+		Str scope;
+		Vector<std::size_t> args;// size_t is indexnof type
+		Str name;
+	};
+	bool operator==(const FuncIdentifier l, const FuncIdentifier r) {
+		return l.scope == r.scope && l.args == r.args && l.name == r.name;
+	}
+	struct ParamIdentifier {
+		std::size_t scope_index;
+		Str name;
+	};
+	struct ClassIdentifier {
+		Str name_space;
+		Str name;
+		Str get()const {
+			return name_space + u"/" + name;
+		}
+	};
+	bool operator==(const ClassIdentifier l, const ClassIdentifier r) {
+		return l.name_space == r.name_space && l.name == r.name;
+	}
+	struct FuncInfo {// This is in DoubleKeyMap.
+		std::size_t param_num;
+		std::size_t default_size;
+		Vector<Command> command;
+	};
+	struct ClassInfo {// This is in DoubleKeyMap.
+		std::size_t size;// The hole size for initialization. This means only member_value
+		std::size_t num_of_member_param;// How many the parent FuncInstance should reserve Vector<ParamPos>.
+
+		Vector<std::size_t> param_indexes;// Member params. Vector of DoubleKeyMap of ClassInfo.
+		Vector<std::size_t> func_indexes;// Member functions. Vector of DoubleKeyMap of FuncInfo.
+	};
+	struct ParamPos { // This is like pointer. The memory is allocated by the parent's FuncInstance or ClassInstance.
+		std::size_t info_index;// This is index of the DoubleKeyMap of ClassInfo.
+		std::size_t begin_of_memory;// This is index of the member param of memory 
+		std::size_t length;// All Param are treated as array.
+	};
+	struct FuncInstance {
+		std::size_t info_index;// This is index of the DoubleKeyMap of FuncInfo.
+
+		Vector<ParamPos> memory_use;// Vector's index is param index.
+		Vector<std::uint8_t> memory;
+
+		FuncInstance(std::size_t index, std::size_t param_num, std::size_t default_memory_size){
+			info_index = index;
+			memory_use.resize(param_num);
+			// In constructor, memory is served but not assigned.
+			// assignment is runned in runtime.
+			memory.reserve(default_memory_size);
+		}
+	};
+	struct ClassInstance {
+		Vector<ParamPos> member_value;
+		Vector<std::size_t> memory;
+
+		std::vector<FuncInstance> member_func;
+	};
+}
+
+
+namespace std {
+	template<>
+	struct hash<cym::FuncIdentifier> {
+		size_t operator()(const cym::FuncIdentifier &i) const {
+			return hash<cym::Str>()(i.scope) ^ hash<cym::Str>()(i.name);
+		}
+	};
+	template<>
+	struct hash<cym::ClassIdentifier> {
+		size_t operator()(const cym::ClassIdentifier &c) const {
+			return hash<cym::Str>()(c.name_space) ^ hash<cym::Str>()(c.name);
+		}
+	};
+}
+#endif
