@@ -35,6 +35,9 @@
     <ClInclude Include="CymU8String.hpp" />
     <ClInclude Include="CymVector.hpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="test.cym" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{181C3425-9AE1-431A-9999-2CE8CD40B715}</ProjectGuid>
