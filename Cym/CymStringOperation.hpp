@@ -3,6 +3,9 @@
 
 #include<string_view>
 #include<string>
+#include<deque>
+
+#include"CymTCPair.hpp"
 
 
 namespace cym {
@@ -14,7 +17,19 @@ namespace cym {
 		FUNC, // func()
 		STRINGLITERAL, // "string literal"
 		EXPRESSION, // (a + b)
+
 	};
+	
+	constexpr char16_t* TokenClass_table[] = {
+		u"ERROR",
+		u"NAME",
+		u"NUMBER",
+		u"SIGN",
+		u"FUNC",
+		u"STRINGLITERAL",
+		u"EXPRESSION"
+	};
+
 
 	template<class Int,class Str>
 	std::pair<bool/* succeed */, Int> toInteger(const Str &str) {
@@ -147,5 +162,77 @@ namespace cym {
 		return takeWord(getRemainedStr(origin, last_word),signs,kind);
 	}
 
+	/*
+	The first of signs must be '(' ,and
+	the second of signs must be ')'.
+	PriorityFunc is bool(Str,Str),and have to return true in case of that left side has high priority.
+	In case of right side has high priority, please return false.
+	*/
+
+	template<class Str, class Container, class PriorityFunc>
+	Vector<Pair<TokenClass, Str>> convertToRPN(const Str &expression, const Container &signs, PriorityFunc &&func) {
+		const auto isSign = [&signs](auto str) {
+			for (const auto &i : signs) {
+				if (i == str) {
+					return true;
+				}
+			}
+			return false;
+		};
+
+		Vector<Pair<TokenClass, Str>> buffer;
+		std::deque<Pair<TokenClass, Str>> stack;
+		TokenClass kind;
+		for (auto str = takeWord(expression, signs, kind); str.length() != 0; str = seekToNextWord(expression, str, signs, kind)) {
+			if (kind != TokenClass::SIGN) {
+				buffer.emplaceBack(kind, str);
+			}
+			else {
+				if (str == signs[1]) {// signs[1] is ')'
+					while (stack.back().second != signs[0]) {// signs[0] is'('
+						buffer.emplaceBack(stack.back());
+						if (stack.size() == 0) {
+							// TODO : error message
+							// showtage of '(' ,or too much ')'
+						}
+						stack.pop_back();
+					}
+					stack.pop_back();
+					continue;
+				}
+				else if (str == signs[0]) {// signs[0] is '('
+					stack.emplace_back(TokenClass::SIGN, str);
+					continue;
+				}
+				do {
+					if (stack.empty()) {
+						stack.emplace_back(TokenClass::SIGN, str);
+						break;
+					}
+					if (func(str, stack.back().second)) {
+						stack.emplace_back(TokenClass::SIGN, str);
+						break;
+					}
+					else {
+						buffer.emplaceBack(stack.back());
+						stack.pop_back();
+					}
+				} while (1);
+			}
+		}
+		for (const auto &i : stack) {
+			buffer.emplaceBack(i);
+		}
+		return buffer;
+	}
+
+	template<class Str,class T>
+	Str showRPN(const T &rpn) {
+		Str str;
+		for (const auto &i : rpn) {
+			str += Str(TokenClass_table[static_cast<std::size_t>(i.first)]) + Str(u",") + Str(i.second) + Str(u"\n");
+		}
+		return str;
+	}
 }
 #endif

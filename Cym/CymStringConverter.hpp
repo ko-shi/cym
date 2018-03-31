@@ -148,6 +148,9 @@ namespace cym {
 	SJisString toSJisString(const std::u16string_view &str) {
 		return toSJisString(toU8String(str));
 	}
+	std::ostream& operator<<(std::ostream &l, const std::u16string_view &r) {
+		return l << toSJisString(r);
+	}
 	std::ostream& operator<<(std::ostream &l, const U8String &r) {
 		return l << toSJisString(r.toString());
 	}
