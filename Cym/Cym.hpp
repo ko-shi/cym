@@ -12,21 +12,42 @@
 #include"CymStringConverter.hpp"
 
 namespace cym {
+
+	struct SSPairHash {
+		std::size_t operator()(const std::pair<std::size_t, std::size_t> &p) const{
+			return std::hash<std::size_t>()(p.first) ^ std::hash<std::size_t>()(p.second);
+		}
+	};
+
 	class Cym {
 	public:
 
 	private:
 		// compile time
 		std::vector<Str> code_;
+		Vector<WordInfo> word_info_;
+		DoubleKeyMap<std::pair<std::size_t, std::size_t>/* line and pos */, ParamIdentifier,SSPairHash> param_identifier_;
 
-
+		
 		DoubleKeyMap<ClassIdentifier, ClassInfo> class_info_;
 		DoubleKeyMap<FuncIdentifier, FuncInfo> func_info_;
+		std::unordered_map<Str, std::size_t> priorities_;
+		Vector<Str> operators_;
+		Vector<Str> reserved_words_;
 
 		// runtime
 		std::size_t current_scope;
 		Stack<FuncInstance> call_stack_;
 	public:
+		Cym() {
+			const std::pair<Str, std::size_t> default_operators[]
+				= { { u"(",2 },{ u")",2 },{ u"=",16 },{ u"+",6 },{ u"-",6 },{ u"*",5 },{ u"/",5 } };
+			for (const auto &i : default_operators) {
+				priorities_.emplace(i);
+			}
+			operators_ = Vector<Str>{ u"(", u")", u"=", u"+", u"-", u"*", u"/" };
+
+		}
 		int addFunc(const Str &scope,const Vector<std::size_t> &args,const Str &name,std::size_t param_num,std::size_t default_size,const Vector<Command> &command) {
 			func_info_.emplace(FuncIdentifier{ scope,args,name }, FuncInfo{param_num,default_size,command});
 			return 0;
@@ -39,12 +60,36 @@ namespace cym {
 			code_.emplace_back(str);
 			return 0;
 		}
-		int compileLine(const Str &str) {
+		int compileLine(const Str &str,std::size_t line) {
+			TokenClass kind;
+			auto scope = Str(u"terminal/Main");
+			const auto head = takeWord(str, reserved_words_, operators_, kind);
+			switch (kind) {
+			case TokenClass::RESERVEDWORD: {
+				WordInfo reserved_word_word_info;
+				reserved_word_word_info.kind = kind;
+				reserved_word_word_info.name = head;
+				reserved_word_word_info.place = std::make_pair(line,str.find(head));
+				word_info_.emplaceBack(reserved_word_word_info);
+				if (head == u"var") {
+					const auto var_name = seekToNextWord(str, head, reserved_words_, operators_, kind);
+					if (kind != TokenClass::NAME) {
+						//TODO コンパイルエラー処理
+					}
+					const auto name_place = std::make_pair(line, str.find(head));
+					param_identifier_.emplace(name_place, ParamIdentifier{scope,});
+					WordInfo var_name_word_info{kind,var_name,};
+
+				}
+			}
+			}
 			return 0;
 		}
 		int compile() {
+			std::size_t line = 0;
 			for (const auto &i : code_) {
-				compileLine(i);
+				compileLine(i,line);
+				line++;
 			}
 			addClass(u"terminal", u"Main", 0, 0, Vector<std::size_t>{}, Vector<std::size_t>{0});
 			addClass(u"terminal", u"PrimaryInt", 4, 1, Vector<std::size_t>{}, Vector<std::size_t>{});
@@ -92,7 +137,7 @@ namespace cym {
 				const auto func_name = findFuncIdentifier(func_instance.info_index);
 				str << u"Function name = " << func_name.name << u"\n";
 				str << u"Scope = " << func_name.scope << u"\n";
-				str << u"Args = " << func_name.args.toString<Str>(toU16String) << u"\n";
+				str << u"Args = " << func_name.args.toString<Str>([](std::size_t s) {return toU16String(s); }) << u"\n";
 				str << u"Command : \n";
 				for (const auto &com : info.command) {
 					str << Command::table[com.id] << u"(" << std::hex << std::uppercase << com.data.i32[0] << u","<< com.data.i32[1] << u")\n";

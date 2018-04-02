@@ -11,9 +11,10 @@
 namespace cym {
 	enum class TokenClass : std::uint8_t {
 		ERROR,
+		RESERVEDWORD, // var,func,class,lamda
 		NAME, // name
 		NUMBER, // 1 or 2 and so on.
-		SIGN, // +,-,*,/,and so on.
+		OPERATOR, // +,-,*,/,and so on.
 		FUNC, // func()
 		STRINGLITERAL, // "string literal"
 		EXPRESSION, // (a + b)
@@ -73,7 +74,7 @@ namespace cym {
 	the second of signs must be ')'.
 	*/
 	template<class Str,class Container>
-	Str takeWord(const Str &str,const Container &signs,TokenClass &meaning) {
+	Str takeWord(const Str &str,const Container &reserved_words,const Container &operators,TokenClass &meaning) {
 		const auto compare = [&](auto itr, auto s) {
 			std::size_t index = 0;
 			for (auto i : s) {
@@ -86,8 +87,8 @@ namespace cym {
 			return index;
 		};
 		/* If isSign() == 0, it's not sign. If isSign() > 0, the returned value means the index + 1 of signs. */
-		const auto isSign = [&](const auto &itr) {
-			for (const auto &i : signs) {
+		const auto isOperator = [&](const auto &itr) {
+			for (const auto &i : operators) {
 				if (const auto index = compare(itr, i);index != 0) {
 					return index;
 				}
@@ -120,7 +121,7 @@ namespace cym {
 			return Str{};
 		}
 		const auto begin = itr;
-		if (pickUpBracket(itr, signs[0], signs[1])) {
+		if (pickUpBracket(itr, operators[0], operators[1])) {
 			meaning = TokenClass::EXPRESSION;
 			return str.substr(begin - str.begin(), itr - begin);
 		}
@@ -132,34 +133,40 @@ namespace cym {
 			meaning = TokenClass::STRINGLITERAL;
 			return str.substr(begin - str.begin(), itr - begin);
 		}
-		if (const auto index = isSign(itr);index != 0) {
-			meaning = TokenClass::SIGN;
-			return str.substr(begin - str.begin(), signs[index - 1].length());// index - 1 is for the definition of isSign()
+		if (const auto index = isOperator(itr);index != 0) {
+			meaning = TokenClass::OPERATOR;
+			return str.substr(begin - str.begin(), operators[index - 1].length());// index - 1 is for the definition of isSign()
 		}
-		while (itr != str.end() && *itr != u' ' && !isSign(itr)) {
+		while (itr != str.end() && *itr != u' ' && !isOperator(itr)) {
 			itr++;
 		}
-		if (pickUpBracket(itr, signs[0], signs[1])) {
+		const auto content = str.substr(begin - str.begin(), itr - begin);
+		if (pickUpBracket(itr, operators[0], operators[1])) {
 			meaning = TokenClass::FUNC;
 		}
 		else {
-			if (const auto result = toInteger<int>(str.substr(begin - str.begin(), itr - begin)); result.first) {
+			if (const auto result = toInteger<int>(content); result.first) {
 				gl_num_if_it_means_number_in_take_word = result.second;
 				meaning = TokenClass::NUMBER;
 			}
 			else {
-				meaning = TokenClass::NAME;
+				if (std::find(reserved_words.begin(), reserved_words.end(), content) == reserved_words.end()) {
+					meaning = TokenClass::NAME;
+				}
+				else {
+					meaning = TokenClass::RESERVEDWORD;
+				}
 			}
 		}
-		return str.substr(begin - str.begin(), itr - begin);
+		return content;
 	}
 	template<class Str>
 	Str getRemainedStr(const Str &origin,const Str &last_word) {
 		return origin.substr(last_word.data() + last_word.length() - origin.data());
 	};
 	template<class Str,class Container>
-	Str seekToNextWord(const Str &origin, const Str &last_word,const Container &signs,TokenClass &kind) {
-		return takeWord(getRemainedStr(origin, last_word),signs,kind);
+	Str seekToNextWord(const Str &origin, const Str &last_word,const Container &reserved_words,const Container &operators,TokenClass &kind) {
+		return takeWord(getRemainedStr(origin, last_word),reserved_words,operators,kind);
 	}
 
 	/*
@@ -170,9 +177,9 @@ namespace cym {
 	*/
 
 	template<class Str, class Container, class PriorityFunc>
-	Vector<Pair<TokenClass, Str>> convertToRPN(const Str &expression, const Container &signs, PriorityFunc &&func) {
-		const auto isSign = [&signs](auto str) {
-			for (const auto &i : signs) {
+	Vector<Pair<TokenClass, Str>> convertToRPN(const Str &expression, const Container &operators, PriorityFunc &&func) {
+		const auto isSign = [&operators](auto str) {
+			for (const auto &i : operators) {
 				if (i == str) {
 					return true;
 				}
@@ -183,13 +190,13 @@ namespace cym {
 		Vector<Pair<TokenClass, Str>> buffer;
 		std::deque<Pair<TokenClass, Str>> stack;
 		TokenClass kind;
-		for (auto str = takeWord(expression, signs, kind); str.length() != 0; str = seekToNextWord(expression, str, signs, kind)) {
-			if (kind != TokenClass::SIGN) {
+		for (auto str = takeWord(expression, operators, kind); str.length() != 0; str = seekToNextWord(expression, str, operators, kind)) {
+			if (kind != TokenClass::OPERATOR) {
 				buffer.emplaceBack(kind, str);
 			}
 			else {
-				if (str == signs[1]) {// signs[1] is ')'
-					while (stack.back().second != signs[0]) {// signs[0] is'('
+				if (str == operators[1]) {// signs[1] is ')'
+					while (stack.back().second != operators[0]) {// signs[0] is'('
 						buffer.emplaceBack(stack.back());
 						if (stack.size() == 0) {
 							// TODO : error message
@@ -200,17 +207,17 @@ namespace cym {
 					stack.pop_back();
 					continue;
 				}
-				else if (str == signs[0]) {// signs[0] is '('
-					stack.emplace_back(TokenClass::SIGN, str);
+				else if (str == operators[0]) {// signs[0] is '('
+					stack.emplace_back(TokenClass::OPERATOR, str);
 					continue;
 				}
 				do {
 					if (stack.empty()) {
-						stack.emplace_back(TokenClass::SIGN, str);
+						stack.emplace_back(TokenClass::OPERATOR, str);
 						break;
 					}
 					if (func(str, stack.back().second)) {
-						stack.emplace_back(TokenClass::SIGN, str);
+						stack.emplace_back(TokenClass::OPERATOR, str);
 						break;
 					}
 					else {

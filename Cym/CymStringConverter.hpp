@@ -124,7 +124,7 @@ namespace cym {
 	char16_t toU16Ch(const char32_t u32Ch) {
 		return static_cast<char16_t>(u32Ch);
 	}
-	std::u16string to16String(const U8String &str) {
+	std::u16string toU16String(const U8String &str) {
 		std::u16string buf;
 		for (auto itr = str.begin(); itr != str.end(); itr++) {
 			buf.push_back(toU16Ch(toU32Ch(*itr)));
@@ -162,7 +162,7 @@ namespace cym {
 		return SJisString(std::to_string(value));
 	}
 	std::u16string toU16String(int value) {
-		return to16String(toU8String(value));
+		return toU16String(toU8String(value));
 	}
 }
 

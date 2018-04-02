@@ -8,6 +8,11 @@
 #include"CymStringOperation.hpp"
 
 namespace cym {
+
+	using Str = std::u16string;
+	using StrView = std::u16string_view;
+	using Stream = std::basic_stringstream<char16_t>;
+
 	enum struct Endian {
 		BIG,
 		LITTLE
@@ -21,17 +26,50 @@ namespace cym {
 	}
 	const Endian native_endian = impl::check();
 
+	struct WordInfo {
+		TokenClass kind;
+		Str name;
+		std::pair<std::size_t, std::size_t> place;
 
-	struct Ward {
+		// option
+		std::size_t index_of_identifier;// index of Vector<FuncIdentifier or ParamIdentifier or ClassIdentifier>
+
+	};
+	/* type infering types */
+
+	struct DataToInfer {
 		enum {
-
+			INFER
 		};
+
 	};
 
 
-	using Str = std::u16string;
-	using StrView = std::u16string_view;
-	using Stream = std::basic_stringstream<char16_t>;
+	struct FuncIdentifier {
+		Str scope;
+		Vector<std::size_t> args;// size_t is indexnof type
+		Str name;
+	};
+	bool operator==(const FuncIdentifier l, const FuncIdentifier r) {
+		return l.scope == r.scope && l.args == r.args && l.name == r.name;
+	}
+	struct ParamIdentifier {
+		Str scope;
+		Str name;
+		std::size_t order;
+	};
+	struct ClassIdentifier {
+		Str name_space;
+		Str name;
+		Str get()const {
+			return name_space + u"/" + name;
+		}
+	};
+	bool operator==(const ClassIdentifier l, const ClassIdentifier r) {
+		return l.name_space == r.name_space && l.name == r.name;
+	}
+
+
 	struct Command {
 		enum Id {
 			// Allocate memory of class(member value's memory). 
@@ -53,28 +91,6 @@ namespace cym {
 		}
 	};
 
-	struct FuncIdentifier {
-		Str scope;
-		Vector<std::size_t> args;// size_t is indexnof type
-		Str name;
-	};
-	bool operator==(const FuncIdentifier l, const FuncIdentifier r) {
-		return l.scope == r.scope && l.args == r.args && l.name == r.name;
-	}
-	struct ParamIdentifier {
-		std::size_t scope_index;
-		Str name;
-	};
-	struct ClassIdentifier {
-		Str name_space;
-		Str name;
-		Str get()const {
-			return name_space + u"/" + name;
-		}
-	};
-	bool operator==(const ClassIdentifier l, const ClassIdentifier r) {
-		return l.name_space == r.name_space && l.name == r.name;
-	}
 	struct FuncInfo {// This is in DoubleKeyMap.
 		std::size_t param_num;
 		std::size_t default_size;

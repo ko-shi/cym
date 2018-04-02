@@ -34,6 +34,7 @@
     <ClInclude Include="CymTCPair.hpp" />
     <ClInclude Include="CymU8String.hpp" />
     <ClInclude Include="CymVector.hpp" />
+    <ClInclude Include="CymHandBuffer.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="test.cym" />

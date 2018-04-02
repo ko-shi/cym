@@ -116,10 +116,15 @@ namespace cym {
 		}
 		int addSize(std::size_t additional_size) {
 			if (size_ + additional_size > capacity_) {
-				resize(size_ + additional_size);
+				return resize(size_ + additional_size);
 			}
 			return size_ += additional_size;
 		}
+
+		void reduceSize(std::size_t offset) {
+			size_ -= offset;
+		}
+
 		int resize(std::size_t size) {
 			if (capacity_ >= size) {
 				std::memset(ptr_ + size_, 0, sizeof(T) * (size - size_));
@@ -183,6 +188,9 @@ namespace cym {
 			std::memcpy(this, &r, s);
 			std::memcpy(&r, buf, s);
 		}
+		bool isEmpty()const {
+			return size_ == 0;
+		}
 		template<class Str,class Func>
 		Str toString(Func &&convFunc)const {
 			Str str;
@@ -203,13 +211,31 @@ namespace cym {
 	public:
 		using Base = std::vector<T>;
 	public:
+		Vector() : Base() {
+
+		}
+		Vector(Vector &&v) : Base(v) {
+
+		}
+		Vector(const Vector &v) : Base(v) {
+
+		}
+		Vector(std::initializer_list<T> &&init) : Base(init) {
+
+		}
+		decltype(auto) operator=(const Vector &v) {
+			return Base::operator=(v);
+		}
+		decltype(auto) operator=(Vector &&v) {
+			return Base::operator=(v);
+		}
 		int pushBack(const T &val) {
 			push_back(val);
 			return 0;
 		}
 		template<class... Args>
 		int emplaceBack(Args&&... args) {
-			emplace_back(args...);
+			emplace_back(std::forward<Args>(args)...);
 			return 0;
 		}
 		int popBack() {

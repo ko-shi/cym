@@ -11,11 +11,11 @@ namespace cym {
 	the second key is Key:template
 	
 	*/
-	template<class Key,class T>
+	template<class Key,class T,class Hasher = std::hash<Key>>
 	struct DoubleKeyMap {
 	public:
 		std::vector<T> indexed;// data is here
-		std::unordered_map<Key, std::size_t> link;// there is the link to data index fron key
+		std::unordered_map<Key, std::size_t,Hasher> link;// there is the link to data index fron key
 		std::size_t index = 0;
 	public:
 		std::size_t emplace(const Key &key,const T &data) {
