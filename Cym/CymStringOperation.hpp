@@ -12,23 +12,34 @@ namespace cym {
 	enum class TokenClass : std::uint8_t {
 		ERROR,
 		RESERVEDWORD, // var,func,class,lamda
-		NAME, // name
+		PARAM, // param
 		NUMBER, // 1 or 2 and so on.
 		OPERATOR, // +,-,*,/,and so on.
 		FUNC, // func()
 		STRINGLITERAL, // "string literal"
 		EXPRESSION, // (a + b)
 
+
+
+
+		TYPEDETERMINED, // for only infering type time.
 	};
 	
 	constexpr char16_t* TokenClass_table[] = {
-		u"ERROR",
-		u"NAME",
-		u"NUMBER",
-		u"SIGN",
-		u"FUNC",
-		u"STRINGLITERAL",
-		u"EXPRESSION"
+		u"error",
+		u"reserved_word",
+		u"param",
+		u"number",
+		u"sign",
+		u"func",
+		u"string_literal",
+		u"expression",
+
+
+
+
+
+		u"type_determinated"
 	};
 
 
@@ -48,6 +59,9 @@ namespace cym {
 			return std::make_pair(true, num);
 		};
 		if (str.front() == u'-') {
+			if (std::is_unsigned_v<Int>) {
+				return func(str.substr(1));
+			}
 			auto old_num = func(str.substr(1));
 			old_num.second *= -1;
 			return old_num;
@@ -151,7 +165,7 @@ namespace cym {
 			}
 			else {
 				if (std::find(reserved_words.begin(), reserved_words.end(), content) == reserved_words.end()) {
-					meaning = TokenClass::NAME;
+					meaning = TokenClass::PARAM;
 				}
 				else {
 					meaning = TokenClass::RESERVEDWORD;
@@ -176,8 +190,8 @@ namespace cym {
 	In case of right side has high priority, please return false.
 	*/
 
-	template<class Str, class Container, class PriorityFunc>
-	Vector<Pair<TokenClass, Str>> convertToRPN(const Str &expression, const Container &operators, PriorityFunc &&func) {
+	template<class Str,class StrView, class Container, class PriorityFunc>
+	Vector<Pair<TokenClass, Str>> convertToRPN(const StrView &expression, const Container &reserved_words,const Container &operators, PriorityFunc &&func) {
 		const auto isSign = [&operators](auto str) {
 			for (const auto &i : operators) {
 				if (i == str) {
@@ -186,18 +200,18 @@ namespace cym {
 			}
 			return false;
 		};
-
+		const auto fitToBuffer = [](const Pair<TokenClass, StrView> &p) {return Pair<TokenClass, Str>(p.first, Str(p.second)); };
 		Vector<Pair<TokenClass, Str>> buffer;
-		std::deque<Pair<TokenClass, Str>> stack;
+		std::deque<Pair<TokenClass, StrView>> stack;
 		TokenClass kind;
-		for (auto str = takeWord(expression, operators, kind); str.length() != 0; str = seekToNextWord(expression, str, operators, kind)) {
+		for (auto str = takeWord(expression,reserved_words,operators, kind); str.length() != 0; str = seekToNextWord(expression, str,reserved_words, operators, kind)) {
 			if (kind != TokenClass::OPERATOR) {
-				buffer.emplaceBack(kind, str);
+				buffer.emplaceBack(kind, Str(str));
 			}
 			else {
 				if (str == operators[1]) {// signs[1] is ')'
 					while (stack.back().second != operators[0]) {// signs[0] is'('
-						buffer.emplaceBack(stack.back());
+						buffer.emplaceBack(fitToBuffer(stack.back()));
 						if (stack.size() == 0) {
 							// TODO : error message
 							// showtage of '(' ,or too much ')'
@@ -221,14 +235,14 @@ namespace cym {
 						break;
 					}
 					else {
-						buffer.emplaceBack(stack.back());
+						buffer.emplaceBack(fitToBuffer(stack.back()));
 						stack.pop_back();
 					}
 				} while (1);
 			}
 		}
 		for (const auto &i : stack) {
-			buffer.emplaceBack(i);
+			buffer.emplaceBack(fitToBuffer(i));
 		}
 		return buffer;
 	}

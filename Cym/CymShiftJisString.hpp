@@ -148,6 +148,9 @@ namespace cym {
 			return ptr_.get();
 		}
 	public:
+		SJisString() {
+
+		}
 		SJisString(const char *str) {
 			std::size_t str_size = std::char_traits<char>::length(str) + 1;
 			ptr_.reset(new char[str_size]);

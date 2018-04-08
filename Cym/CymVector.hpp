@@ -242,6 +242,14 @@ namespace cym {
 			pop_back();
 			return 0;
 		}
+		template<class Str, class Func>
+		Str toString(Func &&convFunc)const {
+			Str str;
+			for (const auto &i : *this) {
+				str += convFunc(i);
+			}
+			return str;
+		}
 	};
 	template<class T>
 	inline void swap(Vector<T> &l, Vector<T> &r) noexcept {

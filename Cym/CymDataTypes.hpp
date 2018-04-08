@@ -50,14 +50,34 @@ namespace cym {
 		Vector<std::size_t> args;// size_t is indexnof type
 		Str name;
 	};
-	bool operator==(const FuncIdentifier l, const FuncIdentifier r) {
+	bool operator==(const FuncIdentifier &l, const FuncIdentifier &r) {
 		return l.scope == r.scope && l.args == r.args && l.name == r.name;
 	}
 	struct ParamIdentifier {
 		Str scope;
 		Str name;
 		std::size_t order;
+		Str get()const {
+			Stream str;
+			str << order;
+			return scope + u"/" + name + u"#" + str.str();
+		}
 	};
+	ParamIdentifier makePIFromSingleStr(const Str &str) {// Make ClassIdentifier from single string. After '/' is name, before is name_space.
+		const auto order_pos = str.rfind(u'/');
+		const auto slash_pos = str.rfind(u'/');
+		return ParamIdentifier{ Str(str, 0, slash_pos),Str(str, slash_pos),toInteger<std::size_t>(Str(str,order_pos)).second };
+	}
+	bool operator==(const ParamIdentifier &l, const ParamIdentifier &r) {
+		return l.scope == r.scope && l.name == r.name && l.order == r.order;
+	}
+	struct ForSameName {
+		Str scope;
+		Str name;
+	};
+	bool operator==(const ForSameName &l, const ForSameName &r) {
+		return l.scope == r.scope && l.name == r.name;
+	}
 	struct ClassIdentifier {
 		Str name_space;
 		Str name;
@@ -65,6 +85,11 @@ namespace cym {
 			return name_space + u"/" + name;
 		}
 	};
+	ClassIdentifier makeCIFromSingleStr(const Str &str) {// Make ClassIdentifier from single string. After '/' is name, before is name_space.
+		const auto slash_pos = str.rfind(u'/');
+		return ClassIdentifier{Str(str, 0, slash_pos),Str(str, slash_pos)};
+	}
+
 	bool operator==(const ClassIdentifier l, const ClassIdentifier r) {
 		return l.name_space == r.name_space && l.name == r.name;
 	}
@@ -142,6 +167,18 @@ namespace std {
 	struct hash<cym::ClassIdentifier> {
 		size_t operator()(const cym::ClassIdentifier &c) const {
 			return hash<cym::Str>()(c.name_space) ^ hash<cym::Str>()(c.name);
+		}
+	};
+	template<>
+	struct hash<cym::ParamIdentifier> {
+		size_t operator()(const cym::ParamIdentifier &f) const {
+			return hash<cym::Str>()(f.name) ^ hash<cym::Str>()(f.scope) + f.order;
+		}
+	};
+	template<>
+	struct hash<cym::ForSameName> {
+		size_t operator()(const cym::ForSameName &f) const {
+			return hash<cym::Str>()(f.name) ^ hash<cym::Str>()(f.scope);
 		}
 	};
 }

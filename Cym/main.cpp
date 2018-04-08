@@ -17,7 +17,9 @@ int main() {
 		project.addLine(cym::toU16String(str));
 	}
 	project.compile();
+
+
 	project.run();
-	std::cout << cym::toSJisString(project.showMemory());
+	std::cout << cym::toSJisString(project.showIntermediateCode());
 	
 }
