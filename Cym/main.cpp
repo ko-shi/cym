@@ -21,6 +21,6 @@ int main() {
 	project.run();
 	std::cout << cym::toSJisString(project.showIntermediateCode());
 	*/
-	std::cout << cym::toSJisString(cym::takeArg(uR"(  x座標(10)、y座標(20)に("こんにちは")と表示する+1 )"));
+	std::cout << cym::toSJisString(cym::replaceExpression(uR"(  func()to() , aaieaoeti ,(3.14,1919) to a )"));
 	
 }

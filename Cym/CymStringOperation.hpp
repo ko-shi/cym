@@ -79,12 +79,14 @@ namespace cym {
 	}
 	StrView getRemainedStr(const StrView &origin, const StrView &last_word) {
 		return origin.substr(last_word.data() + last_word.length() - origin.data());
-	};
+	}
 	StrView rangeOf(const StrView &begin, const StrView &end) {
 		const auto a = StrView(begin.data(), (end.data() + end.size()) - begin.data());
 		return StrView(begin.data(), (end.data() + end.size()) - begin.data());
 	}
-
+	StrView deleteSpace(const StrView &str) {
+		return getRemainedStr(str, takeWhile(str, [](auto c) {return c == u' '; }));
+	}
 	StrView takeArg(const StrView &str,bool can_delete_front_space = true) {
 		const auto specials = Vector<Char>{
 			u'(' ,u'[' ,u'{' ,u'"',u'<',
@@ -93,11 +95,10 @@ namespace cym {
 			u',' ,u' '
 		};
 		const auto brackets = Vector<Pair<Char, Char>>{ { u'(',u')' },{ u'[',u']' },{ u'<',u'>' },{ u'{',u'}' },{ u'"',u'"' } };
-
-		const auto word = can_delete_front_space ? 
-			getRemainedStr(str, takeWhile(str, [](auto c) {return c == u' '; }))
-			: str;
 		const auto takeWhileName = [&](StrView word) {return takeWhile(word, [&](auto c) {return std::none_of(specials.begin(), specials.end(), [&](auto s) {return s == c; }); }); };
+		const auto word = can_delete_front_space ? 
+			deleteSpace(str)
+			: str;
 		const auto name = takeWhileName(word);
 		const auto sign_part = getRemainedStr(str, name);
 
@@ -113,13 +114,13 @@ namespace cym {
 				return name;
 			}
 		case u'(': {
-			const auto a = getBlock(sign_part, brackets);
-			const auto next = getRemainedStr(str, getBlock(sign_part, brackets));
+			const auto bracket_part = getBlock(sign_part, brackets);
+			const auto next = getRemainedStr(str, bracket_part);
 			if (std::any_of(specials.begin() + 1/* + 1 for except '(' */, specials.end(), [&](Char c) {return c == next[0]; })) {
-				return str.substr(0, 0);
+				return rangeOf(name,bracket_part);
 			}
 			else {
-				return rangeOf(name, takeArg(next, false));
+				return rangeOf(name, takeArg(next, false));// rangeOf is like operator+
 			}
 		}
 		case u',':
@@ -129,19 +130,36 @@ namespace cym {
 		return name;
 	}
 
+	StrView takeExpression(const StrView &str) {
+		const auto word = takeArg(str);
+		const auto next_word = getRemainedStr(str, takeWhile(getRemainedStr(str, word), [](auto c) {return c == u' '; }));
+		return next_word.empty() || next_word[0] == u',' ? word : rangeOf(word, takeExpression(next_word));
+	}
 
+	Str repeat(const Str &str, std::size_t n, Str b = u"") {
+		return n == 0 ? b.pop_back(),b : repeat(str, n - 1, b + str + u',');
+	}
+	// 114514,yaju,MUR => @,@,@
+	Str replaceExpression(const StrView &str,int expr_num = 0) {
+		const auto expr = takeExpression(str);
+		const auto next = getRemainedStr(str, takeWhile(getRemainedStr(str, expr), [](auto c) {return c == u' ' || c == u','; }));
+		return next.empty() ? repeat(u"@",expr_num + 1): replaceExpression(next,expr_num + 1);
+	}
 
 	Str toFuncName(const StrView &str) {
-		const auto brackets = Vector<Pair<Char, Char>>{ { u'(',u')' },{ u'[',u']' },{ u'<',u'>' },{ u'{',u'}' },{ u'\"',u'\"' } };
+		const auto specials = Vector<Char>{
+			u'(' ,u'[' ,u'{' ,u'"',u'<',
+			u'+' ,u'-' ,u'*' ,u'/' ,
+			u'.',
+			u',' ,u' '
+		};
+		const auto brackets = Vector<Pair<Char, Char>>{ { u'(',u')' },{ u'[',u']' },{ u'<',u'>' },{ u'{',u'}' },{ u'"',u'"' } };
+		const auto takeWhileName = [&](StrView word) {return takeWhile(word, [&](auto c) {return std::none_of(specials.begin(), specials.end(), [&](auto s) {return s == c; }); }); };
+		const auto name_part = takeWhileName(str);
+		const auto bracket_part = getBlock(getRemainedStr(str, name_part), brackets);
 		
-		Str new_func_name;
-		const auto str_part = takeWhile(str, [](auto c) {return c != u'('; });
-		new_func_name += str_part;
-		StrView next = getRemainedStr(str,str_part);
-		while (next = getBlock(next.substr(1), brackets),next != StrView{}) {
-			new_func_name += '@';
-		}
-		return new_func_name;
+
+		return u"";
 	}
 
 	int gl_num_if_it_means_number_in_take_word = 0;
