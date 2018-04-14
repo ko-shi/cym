@@ -19,18 +19,13 @@ namespace cym {
 		Stack(Container&& _Cont) : c_(std::move(_Cont)){
 
 		}
-		auto push(T&& _Val)
-		{
-			c_.pushBack(std::move(_Val));
-		}
-
 		template<class... Args>
 		decltype(auto) emplace(Args&&... args){
 			return c_.emplaceBack(std::forward<Args>(args)...);
 		}
 
 		bool empty() const{
-			return c_.empty();
+			return c_.isEmpty();
 		}
 
 		std::size_t size() const{
@@ -45,8 +40,8 @@ namespace cym {
 			return c_.back();
 		}
 
-		auto push(const T& _Val){
-			return c_.pushBack(_Val);
+		void push(const T& val){
+			c_.pushBack(val);
 		}
 
 		auto pop(){

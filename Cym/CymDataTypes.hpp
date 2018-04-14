@@ -5,13 +5,17 @@
 #include<type_traits>
 
 #include"CymVector.hpp"
-#include"CymStringOperation.hpp"
 
 namespace cym {
 
+	using Char = char16_t;
 	using Str = std::u16string;
 	using StrView = std::u16string_view;
 	using Stream = std::basic_stringstream<char16_t>;
+
+
+	template<class Int>
+	std::pair<bool/* succeed */, Int> toInteger(const Str &str);
 
 	enum struct Endian {
 		BIG,
@@ -26,6 +30,30 @@ namespace cym {
 	}
 	const Endian native_endian = impl::check();
 
+	enum class TokenClass : std::uint8_t {
+		ERROR,
+		RESERVEDWORD, // var,func,class
+		PARAM, // param
+		NUMBER, // 1 or 2 and so on.
+		INFIX, // +,-,*,/,and so on.
+		FUNC, // func(), do()to() 
+		STRINGLITERAL, // "string literal"
+
+		EXPRESSION, // (a + b) it's on the way of converting
+
+		TYPEDETERMINED,
+	};
+
+	constexpr Char* TokenClass_table[] = {
+		u"error",
+		u"reserved_word",
+		u"param",
+		u"number",
+		u"sign",
+		u"func",
+		u"string_literal",
+		u"expression",
+	};
 	struct WordInfo {
 		TokenClass kind;
 		Str name;
@@ -100,6 +128,7 @@ namespace cym {
 			// Allocate memory of class(member value's memory). 
 			ALLOC_CLASS, // index of Vector<ParamPos>,index of ClassInfo
 			SUBSTITUTE, // index of Vector<ParamPos>,data
+			PICK_UP, // index of Vector<ParamPos>,ignore
 		} id;
 		constexpr static char16_t* table[] = {
 			u"ALLOC_CLASS",

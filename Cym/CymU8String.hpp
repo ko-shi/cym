@@ -169,6 +169,8 @@ namespace cym {
 		U8String(const char(&str)[N]) : ptr_(new char[N]), size_(N), capacity_(size_) {
 			std::memcpy(data(), str, N * sizeof(char));
 		}
+		U8String() : U8String(u8""){
+		}
 		U8String(const std::string &str) : ptr_(new char[str.length() + 1]), size_(str.length() + 1), capacity_(size_) {
 			std::memcpy(data(), str.c_str(), size_ * sizeof(char));
 		}

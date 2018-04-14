@@ -20,6 +20,7 @@ namespace cym {
 	enum CodePage {
 		shift_jis_codepage = 932,
 		utf_8_codepage = CP_UTF8,
+		utf_16le_codepage = 1200
 	};
 	// length must be included '\0'
 	std::wstring toWString(const char *str,int length, UINT codepage) {
@@ -135,7 +136,7 @@ namespace cym {
 		if (size == static_cast<std::size_t>(-1)) {
 			size = std::char_traits<char16_t>::length(str) + 1;
 		}
-		U8String buffer("");
+		U8String buffer;
 		for (std::size_t i = 0; i < size; i++) {
 			buffer.pushBack(toU8Char(str[i]));
 		}
@@ -147,6 +148,9 @@ namespace cym {
 
 	SJisString toSJisString(const std::u16string_view &str) {
 		return toSJisString(toU8String(str));
+	}
+	std::wstring toWString(const std::u16string_view &str) {
+		return toWString(toU8String(str));
 	}
 	std::ostream& operator<<(std::ostream &l, const std::u16string_view &r) {
 		return l << toSJisString(r);

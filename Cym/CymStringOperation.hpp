@@ -6,44 +6,14 @@
 #include<deque>
 
 #include"CymTCPair.hpp"
+#include"CymDataTypes.hpp"
 
 
 namespace cym {
-	enum class TokenClass : std::uint8_t {
-		ERROR,
-		RESERVEDWORD, // var,func,class,lamda
-		PARAM, // param
-		NUMBER, // 1 or 2 and so on.
-		OPERATOR, // +,-,*,/,and so on.
-		FUNC, // func()
-		STRINGLITERAL, // "string literal"
-		EXPRESSION, // (a + b)
-
-
-
-
-		TYPEDETERMINED, // for only infering type time.
-	};
 	
-	constexpr char16_t* TokenClass_table[] = {
-		u"error",
-		u"reserved_word",
-		u"param",
-		u"number",
-		u"sign",
-		u"func",
-		u"string_literal",
-		u"expression",
 
 
-
-
-
-		u"type_determinated"
-	};
-
-
-	template<class Int,class Str>
+	template<class Int>
 	std::pair<bool/* succeed */, Int> toInteger(const Str &str) {
 		const auto func = [](const Str &s) {
 			Int num = 0;
@@ -70,118 +40,115 @@ namespace cym {
 			return func(str);
 		}
 	}
-	template<class Str>
-	Str takeWord(const Str &str) {
-		auto itr = str.begin();
-		while (itr != str.end() && *itr == u' ') {
-			itr++;
+	template<class Container>
+	StrView getBlock(const StrView &str,const Container &brackets) {
+		Stack<Char> stack;
+		std::size_t index = 0;
+		for (const auto &c : str) {
+			for (const auto &b : brackets) {
+				if (b.first == c) {
+					stack.push(b.second);
+				}
+				if (b.second == c) {
+					if (stack.top() == b.second) {
+						stack.pop();
+					}
+					else {
+						return u"Error";
+					}
+				}
+			}
+			index++;
+			if (stack.empty()) {
+				break;
+			}
 		}
-		const auto begin = itr;
-		while (itr != str.end() && *itr != u' ') {
-			itr++;
-		}
-		return str.substr(begin - str.begin(), itr - begin);
+		return str.substr(0, index);
 	}
+	template<class F>
+	StrView takeWhile(const StrView &str, F &&f) {
+		// functional writiing is too slow!
+		std::size_t index = 0;
+		for (auto i : str) {
+			if (!f(i)) {
+				break;
+			}
+			index++;
+		}
+		return str.substr(0, index);
+	}
+	StrView getRemainedStr(const StrView &origin, const StrView &last_word) {
+		return origin.substr(last_word.data() + last_word.length() - origin.data());
+	};
+	StrView rangeOf(const StrView &begin, const StrView &end) {
+		const auto a = StrView(begin.data(), (end.data() + end.size()) - begin.data());
+		return StrView(begin.data(), (end.data() + end.size()) - begin.data());
+	}
+
+	StrView takeArg(const StrView &str,bool can_delete_front_space = true) {
+		const auto specials = Vector<Char>{
+			u'(' ,u'[' ,u'{' ,u'"',u'<',
+			u'+' ,u'-' ,u'*' ,u'/' ,
+			u'.',
+			u',' ,u' '
+		};
+		const auto brackets = Vector<Pair<Char, Char>>{ { u'(',u')' },{ u'[',u']' },{ u'<',u'>' },{ u'{',u'}' },{ u'"',u'"' } };
+
+		const auto word = can_delete_front_space ? 
+			getRemainedStr(str, takeWhile(str, [](auto c) {return c == u' '; }))
+			: str;
+		const auto takeWhileName = [&](StrView word) {return takeWhile(word, [&](auto c) {return std::none_of(specials.begin(), specials.end(), [&](auto s) {return s == c; }); }); };
+		const auto name = takeWhileName(word);
+		const auto sign_part = getRemainedStr(str, name);
+
+		switch (sign_part[0]) {
+		case u'+':
+		case u'-':
+		case u'*':
+		case u'/':
+			if (name.empty()) {
+				return sign_part.substr(0, 1);
+			}
+			else {
+				return name;
+			}
+		case u'(': {
+			const auto a = getBlock(sign_part, brackets);
+			const auto next = getRemainedStr(str, getBlock(sign_part, brackets));
+			if (std::any_of(specials.begin() + 1/* + 1 for except '(' */, specials.end(), [&](Char c) {return c == next[0]; })) {
+				return str.substr(0, 0);
+			}
+			else {
+				return rangeOf(name, takeArg(next, false));
+			}
+		}
+		case u',':
+		case u' ':
+			return name;
+		}
+		return name;
+	}
+
+
+
+	Str toFuncName(const StrView &str) {
+		const auto brackets = Vector<Pair<Char, Char>>{ { u'(',u')' },{ u'[',u']' },{ u'<',u'>' },{ u'{',u'}' },{ u'\"',u'\"' } };
+		
+		Str new_func_name;
+		const auto str_part = takeWhile(str, [](auto c) {return c != u'('; });
+		new_func_name += str_part;
+		StrView next = getRemainedStr(str,str_part);
+		while (next = getBlock(next.substr(1), brackets),next != StrView{}) {
+			new_func_name += '@';
+		}
+		return new_func_name;
+	}
+
 	int gl_num_if_it_means_number_in_take_word = 0;
 	/*
 	The first of signs must be '(' ,and
 	the second of signs must be ')'.
 	*/
-	template<class Str,class Container>
-	Str takeWord(const Str &str,const Container &reserved_words,const Container &operators,TokenClass &meaning) {
-		const auto compare = [&](auto itr, auto s) {
-			std::size_t index = 0;
-			for (auto i : s) {
-				if (itr == str.end() || i != *itr) {
-					return std::size_t{};// means 0
-				}
-				itr++;
-				index++;
-			}
-			return index;
-		};
-		/* If isSign() == 0, it's not sign. If isSign() > 0, the returned value means the index + 1 of signs. */
-		const auto isOperator = [&](const auto &itr) {
-			for (const auto &i : operators) {
-				if (const auto index = compare(itr, i);index != 0) {
-					return index;
-				}
-			}
-			return std::size_t{};// means 0
-		};
-		const auto pickUpBracket = [&](auto &itr,const auto &br_begin, const auto &br_end) {
-			if (compare(itr, br_begin)) {
-				std::size_t parenthesis_num = 0;
-				do {
-					if (itr != str.end()) {
-						if (compare(itr, br_begin)) {
-							parenthesis_num++;
-						}
-						else if (compare(itr, br_end)) {
-							parenthesis_num--;
-						}
-						itr++;
-					}
-				} while (parenthesis_num != 0);
-				return true;
-			}
-			return false;
-		};
-		auto itr = str.begin();
-		while (itr != str.end() && *itr == u' ') {
-			itr++;
-		}
-		if (itr == str.end()) {
-			return Str{};
-		}
-		const auto begin = itr;
-		if (pickUpBracket(itr, operators[0], operators[1])) {
-			meaning = TokenClass::EXPRESSION;
-			return str.substr(begin - str.begin(), itr - begin);
-		}
-		if (*itr == u'"') {
-			do{
-				itr++;
-			}while (itr != str.end() && *itr != '"');
-			itr++;
-			meaning = TokenClass::STRINGLITERAL;
-			return str.substr(begin - str.begin(), itr - begin);
-		}
-		if (const auto index = isOperator(itr);index != 0) {
-			meaning = TokenClass::OPERATOR;
-			return str.substr(begin - str.begin(), operators[index - 1].length());// index - 1 is for the definition of isSign()
-		}
-		while (itr != str.end() && *itr != u' ' && !isOperator(itr)) {
-			itr++;
-		}
-		const auto content = str.substr(begin - str.begin(), itr - begin);
-		if (pickUpBracket(itr, operators[0], operators[1])) {
-			meaning = TokenClass::FUNC;
-		}
-		else {
-			if (const auto result = toInteger<int>(content); result.first) {
-				gl_num_if_it_means_number_in_take_word = result.second;
-				meaning = TokenClass::NUMBER;
-			}
-			else {
-				if (std::find(reserved_words.begin(), reserved_words.end(), content) == reserved_words.end()) {
-					meaning = TokenClass::PARAM;
-				}
-				else {
-					meaning = TokenClass::RESERVEDWORD;
-				}
-			}
-		}
-		return content;
-	}
-	template<class Str>
-	Str getRemainedStr(const Str &origin,const Str &last_word) {
-		return origin.substr(last_word.data() + last_word.length() - origin.data());
-	};
-	template<class Str,class Container>
-	Str seekToNextWord(const Str &origin, const Str &last_word,const Container &reserved_words,const Container &operators,TokenClass &kind) {
-		return takeWord(getRemainedStr(origin, last_word),reserved_words,operators,kind);
-	}
 
 	/*
 	The first of signs must be '(' ,and
@@ -190,62 +157,6 @@ namespace cym {
 	In case of right side has high priority, please return false.
 	*/
 
-	template<class Str,class StrView, class Container, class PriorityFunc>
-	Vector<Pair<TokenClass, Str>> convertToRPN(const StrView &expression, const Container &reserved_words,const Container &operators, PriorityFunc &&func) {
-		const auto isSign = [&operators](auto str) {
-			for (const auto &i : operators) {
-				if (i == str) {
-					return true;
-				}
-			}
-			return false;
-		};
-		const auto fitToBuffer = [](const Pair<TokenClass, StrView> &p) {return Pair<TokenClass, Str>(p.first, Str(p.second)); };
-		Vector<Pair<TokenClass, Str>> buffer;
-		std::deque<Pair<TokenClass, StrView>> stack;
-		TokenClass kind;
-		for (auto str = takeWord(expression,reserved_words,operators, kind); str.length() != 0; str = seekToNextWord(expression, str,reserved_words, operators, kind)) {
-			if (kind != TokenClass::OPERATOR) {
-				buffer.emplaceBack(kind, Str(str));
-			}
-			else {
-				if (str == operators[1]) {// signs[1] is ')'
-					while (stack.back().second != operators[0]) {// signs[0] is'('
-						buffer.emplaceBack(fitToBuffer(stack.back()));
-						if (stack.size() == 0) {
-							// TODO : error message
-							// showtage of '(' ,or too much ')'
-						}
-						stack.pop_back();
-					}
-					stack.pop_back();
-					continue;
-				}
-				else if (str == operators[0]) {// signs[0] is '('
-					stack.emplace_back(TokenClass::OPERATOR, str);
-					continue;
-				}
-				do {
-					if (stack.empty()) {
-						stack.emplace_back(TokenClass::OPERATOR, str);
-						break;
-					}
-					if (func(str, stack.back().second)) {
-						stack.emplace_back(TokenClass::OPERATOR, str);
-						break;
-					}
-					else {
-						buffer.emplaceBack(fitToBuffer(stack.back()));
-						stack.pop_back();
-					}
-				} while (1);
-			}
-		}
-		for (const auto &i : stack) {
-			buffer.emplaceBack(fitToBuffer(i));
-		}
-		return buffer;
-	}
 
 	template<class Str,class T>
 	Str showRPN(const T &rpn) {

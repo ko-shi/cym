@@ -1,0 +1,89 @@
+//コメントはこれと
+/*
+これ(入れ子許可)
+*/
+
+//main関数を作れるのは拡張子.cymmのみで一つのプロジェクトに一つとする
+
+//グローバルスコープはmain関数となる
+//.cymmに書かれたものはすべてmaster名前空間に入る
+
+print("Hello, world!")
+
+//変数宣言はvarから始める
+//右辺を推論する
+var i = 0
+
+//明示的な型指定あり
+var str : Str = "aiueo"
+
+//参照はrefで始める
+//参照は'.'で得られる(?)
+ref r = i.
+r = 114514
+
+//const参照はcrefで始める(参照先の値も参照する場所も変えられない)
+cref cr = i.
+
+//定数はletで始まる
+let pi = 3.14
+
+//配列は{}で囲う
+//一文字は''で表す(UTF-36)
+// to は中置関数
+let alphabets = 'a' to 'z'
+
+//タプルは<>で囲う
+let tuple = <"string",10>
+
+//関数定義はfuncで始める
+//引数は型推論可能
+//スコープはインデント
+//戻り値はretで返す
+func sum(let a,let b)
+    ret a + b
+
+//Unicode文字対応
+//複数の引数群を一つの関数に作れる(コンパイルオプションにより非推奨)
+//case 条件式 : 式
+//other : 式
+func (let a)と(let b)の最大値
+    case a >= b : ret a
+    other : ret b
+
+//クラスの定義はclassから始める
+class WrappedArray
+    //メンバ変数はローカル変数と同様
+    //型を明示しなくてもよい
+    var arr
+
+    //デフォルトコンストラクタ
+    //引数によりメンバ変数も推論可能
+    func WrappedArray(var arg1)
+        arr = arg1
+
+    //デフォルトコンストラクタ
+    //メンバ変数の型が明示されてないとつくられない
+    /*
+    func WrappedArray()
+        arr = 
+    */
+
+    //メンバ関数は関数と同様
+    //funcを引数にとることもできる
+    func forEach(func f)
+        for(ref i : arr)
+            i = f(i)
+
+var arr = WrappedArray(0 to 810)
+//クラスを変数構造の等しいタプルにできる
+var tuple_arr = tupleof(arr)
+
+
+//infixによって中置関数が作れる
+infix (func f)<=(let... args)
+    f(args...)
+
+//関数の引数を'_'にするとその部分がカリー化する
+//タプル
+var arr_tuple_arr = WrappedArray(_) <= expand(tuple_arr)

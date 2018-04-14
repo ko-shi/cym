@@ -11,6 +11,8 @@
 #include"CymDoubleKeyMap.hpp"
 #include"CymDataTypes.hpp"
 #include"CymStringConverter.hpp"
+#include"CymHandStack.hpp"
+#include"CymStringOperation.hpp"
 
 namespace cym {
 
@@ -42,6 +44,7 @@ namespace cym {
 		// runtime
 		std::size_t current_scope;
 		Stack<FuncInstance> call_stack_;
+		HandStack</* class_info_'s index */std::size_t> hand_stack_;
 	public:
 		Cym() {
 			const std::pair<StrView, std::size_t> default_operators[]
@@ -66,9 +69,8 @@ namespace cym {
 		}
 		Vector<Pair<TokenClass,Str>> getRPN(const StrView &str) {
 			const auto compPriority = [&](const StrView &l, const StrView &r) {return priorities_[l] > priorities_[r]; };
-			return convertToRPN<Str>(str, reserved_words_, operators_, compPriority);
+			return Vector<Pair<TokenClass, Str>>{};
 		}
-
 		ClassIdentifier requestToInferType(const ParamIdentifier &param) {
 			for (auto &&i : to_infer_list_[param]) {
 				switch (i.first) {
@@ -88,8 +90,8 @@ namespace cym {
 		int compileLine(const Str &str,std::size_t line) {
 			using namespace std::placeholders;
 			TokenClass kind;
-			auto pickUpWord = std::bind(takeWord<StrView,Vector<Str>>, _1, std::cref(reserved_words_), std::cref(operators_), std::ref(kind));
-			auto nextWord = std::bind(seekToNextWord<StrView,Vector<Str>>, std::cref(str), _1, std::cref(reserved_words_), std::cref(operators_), _2);
+			auto pickUpWord = [](StrView) {return StrView{}; };
+			auto nextWord = [](StrView,TokenClass&) {return StrView{}; };
 			
 			auto scope = Str(u"master/Main/main");
 			const auto head = pickUpWord(str);
@@ -102,7 +104,7 @@ namespace cym {
 				word_info_.emplaceBack(reserved_word_word_info);
 				if (head == u"var") {
 					/* Definition of a paramator */
-					const auto var_name = seekToNextWord<StrView>(str, head, reserved_words_, operators_, kind);
+					const auto var_name = StrView{};//seekToNextWord(str, head, reserved_words_, operators_, kind);
 					if (kind != TokenClass::PARAM) {
 						//TODO コンパイルエラー処理
 					}
@@ -111,7 +113,7 @@ namespace cym {
 					const auto var_identifier = ParamIdentifier{ scope,Str(var_name), ++param_name_times_[ForSameName{ scope,Str(var_name) }]};
 					param_identifier_.emplace(name_place, var_identifier);
 					WordInfo var_name_word_info{kind,Str(var_name),name_place,param_identifier_.indexOf(name_place)};
-					const auto equal = seekToNextWord(StrView(str), StrView(var_name), reserved_words_, operators_, kind);
+					const auto equal = StrView{};//seekToNextWord(StrView(str), StrView(var_name), reserved_words_, operators_, kind);
 
 					if (equal != u"=") {
 						//TODO コンパイルエラー処理
@@ -120,31 +122,34 @@ namespace cym {
 					to_infer_list_.emplace(var_identifier, rpn);
 
 					intermediate_code_.emplaceBack(Str(u"allocate") + u" " + var_identifier.get() + u" " + u"not_determined");
-					intermediate_code_.emplaceBack(Str(u"push") + u" " + u"PARAM" + u" " + var_identifier.get());
+					intermediate_code_.emplaceBack(Str(u"push") + u" " + u"param" + u" " + var_identifier.get());
 					for (const auto &i : rpn) {
 						intermediate_code_.emplaceBack(
 							Str(u"push") + u" " + TokenClass_table[static_cast<std::size_t>(i.first)] + u" " + i.second
 						);
 					}
-					intermediate_code_.emplaceBack(Str(u"call") + u" " + u"typeof" + u"(" + var_identifier.get() + u")" + u"." + u"constructor");
+					intermediate_code_.emplaceBack(Str(u"call") + u" " + u"typeof" + u"(" + var_identifier.get() + u")" + u"." + u"constructor@");
 				}
 			}
 			}
 			return 0;
 		}
 		int compile() {
-			addClass(u"master", u"PrimaryInt", 4, 1, {}, {});
-			//addFunc(u"master", {}, u"constructor");
-			addClass(u"master", u"Main", 0, 0, {}, {0});
-			addFunc(u"master/Main", {}, u"main", 1, 4, {
-				Command(Command::ALLOC_CLASS, 0, class_info_.indexOf(ClassIdentifier{Str(u"master"),Str(u"PrimaryInt")})),
-				Command(Command::SUBSTITUTE, 0, 0x01234567)
+			addClass(u"master", u"PrimaryInt",/* size = */ 4,/* param_num = */ 1,/* params */ {},/* funcs */ {});
+			const auto primary_int_index = class_info_.indexOf({ u"master",u"PrimaryInt" });
+			addFunc(u"master/PrimaryInt", { primary_int_index/* TODO :reference ,means 'this' */,primary_int_index }, u"@constructor@", 1, 4, {
+				Command(Command::PICK_UP, 0,0)
 			});
 			std::size_t line = 0;
 			for (const auto &i : code_) {
 				compileLine(i,line);
 				line++;
 			}
+			addClass(u"master", u"Main", 0, 0, {}, {0});
+			addFunc(u"master/Main", {}, u"main", 1, 4, {
+				Command(Command::ALLOC_CLASS, 0, class_info_.indexOf({u"master",u"PrimaryInt"})),
+				Command(Command::SUBSTITUTE, 0, 0x01234567)
+			});
 
 			return 0;
 		}
@@ -167,6 +172,15 @@ namespace cym {
 				break;
 			case Command::SUBSTITUTE:
 				*static_cast<std::uint32_t*>(static_cast<void*>(current_func.memory.data() + current_func.memory_use[com->data.i32[0]].begin_of_memory)) = com->data.i32[1];
+				break;
+			case Command::PICK_UP:// TODO: int32のみ代入演算子でコピーする
+				std::memcpy(
+					current_func.memory.data() + current_func.memory_use[com->data.i32[0]].begin_of_memory,
+					hand_stack_.backAsArrayBegin(),
+					hand_stack_.getLastSize() // This must be the same as class_info_[current_func.memory_use[com->data.i32[0]].info_index].size
+				);
+				hand_stack_.popBack();
+				break;
 			default:
 				break;
 			}

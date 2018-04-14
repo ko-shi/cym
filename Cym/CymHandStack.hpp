@@ -1,5 +1,5 @@
-#ifndef CYM_HAND_BUFFER_HPP
-#define CYM_HAND_BUFFER_HPP
+#ifndef CYM_HAND_STACK_HPP
+#define CYM_HAND_STACK_HPP
 
 
 #include"CymVector.hpp"
@@ -12,14 +12,14 @@ namespace cym {
 		T additional_data;
 	};
 	template<class AdT,std::enable_if_t<std::is_trivially_copyable_v<AdT>, std::nullptr_t> = nullptr>
-	class HandBuffer {
+	class HandStack {
 	private:
 		using DataSetType = DataSet<AdT>;
 
 
 		Vector<std::uint8_t> buffer_;
 	public:
-		HandBuffer(std::size_t size = 16) : buffer_(size){
+		HandStack(std::size_t size = 16) : buffer_(size){
 			
 		}
 		bool isEmpty()const {
@@ -29,10 +29,8 @@ namespace cym {
 		void pushBack(T* begin, T* end,const AdT &additional_data) {
 			const auto size = (end - begin) * sizeof(T);
 			buffer_.reserve(buffer_.size() + size + sizeof(DataSetType));
-			for (auto i = begin; i != end; i++) {
-				std::memcpy(buffer_.end(), i, sizeof(T));
-				buffer_.addSize(sizeof(T));
-			}
+			std::memcpy(buffer_.end(), begin, size);
+			buffer_.addSize(size);
 			DataSetType dataset{ size,additional_data };
 			std::memcpy(buffer_.end(), &dataset, sizeof(dataset));
 			buffer_.addSize(sizeof(dataset));
@@ -46,9 +44,13 @@ namespace cym {
 			buffer_.addSize(4 + sizeof(dataset));
 		}
 
-		AdT getLastAdditionalData() const{
+		AdT getLastAdditionalData() const {
 			const DataSetType *dataset = static_cast<const DataSetType*>(static_cast<const void*>(buffer_.end() - sizeof(DataSetType)));
 			return dataset->additional_data;
+		}
+		std::size_t getLastSize() const {
+			const DataSetType *dataset = static_cast<const DataSetType*>(static_cast<const void*>(buffer_.end() - sizeof(DataSetType)));
+			return dataset->size;
 		}
 
 		std::pair<void*, void*> backAsArray() {
@@ -57,6 +59,10 @@ namespace cym {
 				buffer_.end() - sizeof(DataSetType) - dataset->size
 				, buffer_.end() - sizeof(DataSetType)
 			);
+		}
+		void* backAsArrayBegin() {
+			const DataSetType *dataset = static_cast<const DataSetType*>(static_cast<const void*>(buffer_.end() - sizeof(DataSetType)));
+			return buffer_.end() - sizeof(DataSetType) - dataset->size;
 		}
 
 		std::int32_t backAs32() const{
