@@ -1,0 +1,44 @@
+var i = 0
+
+i := max(10,50) + min(10,Int("114514"))
+
+
+
+DefineFunc master/init{
+	DefineParam i{
+		
+	}
+	Call @constructor@{
+		Param{
+			i
+		}
+		Integer{
+			0
+		}
+	}
+	Call @:=@{
+		Param{
+			i
+		}
+		PushCall @+@{
+			PushCall max@@{
+				Integer{
+					10
+				}
+				Integer{
+					50
+				}
+			}
+			PushCall min@@{
+				Integer{
+					10
+				}
+				PushCall Int@{
+					Literal{
+						"114514"
+					}
+				}
+			}
+		}
+	}
+}

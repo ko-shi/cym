@@ -1,6 +1,7 @@
 #include<iostream>
 #include<fstream>
 #include"Cym.hpp"
+#include"CymNumConverter.hpp"
 #include"CymHandStack.hpp"
 
 int main() {
@@ -21,6 +22,8 @@ int main() {
 	project.run();
 	std::cout << cym::toSJisString(project.showIntermediateCode());
 	*/
-	std::cout << cym::toSJisString(cym::replaceExpression(uR"(  func()to() , aaieaoeti ,(3.14,1919) to a )"));
+	cym::TokenKind kind;
+	const auto a = cym::getNumKind(u"-114514.1919g",kind);
+
 	
 }

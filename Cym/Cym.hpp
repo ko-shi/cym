@@ -32,7 +32,7 @@ namespace cym {
 		Vector<WordInfo> word_info_;
 		DoubleKeyMap<std::pair<std::size_t, std::size_t>/* line and pos */, ParamIdentifier,SSPairHash> param_identifier_;
 		std::unordered_map<ForSameName, std::size_t/* times */> param_name_times_;
-		std::unordered_map<ParamIdentifier, Vector<Pair<TokenClass, Str>>> to_infer_list_;
+		std::unordered_map<ParamIdentifier, Vector<Pair<TokenKind, Str>>> to_infer_list_;
 		Vector<Str> intermediate_code_;
 
 		DoubleKeyMap<ClassIdentifier, ClassInfo> class_info_;
@@ -67,21 +67,21 @@ namespace cym {
 			code_.emplace_back(str);
 			return 0;
 		}
-		Vector<Pair<TokenClass,Str>> getRPN(const StrView &str) {
+		Vector<Pair<TokenKind,Str>> getRPN(const StrView &str) {
 			const auto compPriority = [&](const StrView &l, const StrView &r) {return priorities_[l] > priorities_[r]; };
-			return Vector<Pair<TokenClass, Str>>{};
+			return Vector<Pair<TokenKind, Str>>{};
 		}
 		ClassIdentifier requestToInferType(const ParamIdentifier &param) {
 			for (auto &&i : to_infer_list_[param]) {
 				switch (i.first) {
-				case TokenClass::NUMBER:
-					i = makePair(TokenClass::TYPEDETERMINED, ClassIdentifier{ u"master",u"PrimaryInt" }.get());
+				case TokenKind::NUMBER:
+					i = makePair(TokenKind::TYPEDETERMINED, ClassIdentifier{ u"master",u"PrimaryInt" }.get());
 					break;
 					// TODO 文字列リテラルの推論、関数、中置関数の推論
 				}
 			}
 			const auto last_pair = to_infer_list_[param].back();
-			if (to_infer_list_[param].size() != 1 || last_pair.first != TokenClass::TYPEDETERMINED) {
+			if (to_infer_list_[param].size() != 1 || last_pair.first != TokenKind::TYPEDETERMINED) {
 				return ClassIdentifier{ u"error",u"type couldn't be infered." };
 			}
 			return makeCIFromSingleStr(last_pair.second);
@@ -89,14 +89,14 @@ namespace cym {
 
 		int compileLine(const Str &str,std::size_t line) {
 			using namespace std::placeholders;
-			TokenClass kind;
+			TokenKind kind;
 			auto pickUpWord = [](StrView) {return StrView{}; };
-			auto nextWord = [](StrView,TokenClass&) {return StrView{}; };
+			auto nextWord = [](StrView,TokenKind&) {return StrView{}; };
 			
 			auto scope = Str(u"master/Main/main");
 			const auto head = pickUpWord(str);
 			switch (kind) {
-			case TokenClass::RESERVEDWORD: {
+			case TokenKind::RESERVEDWORD: {
 				WordInfo reserved_word_word_info;
 				reserved_word_word_info.kind = kind;
 				reserved_word_word_info.name = head;
@@ -105,7 +105,7 @@ namespace cym {
 				if (head == u"var") {
 					/* Definition of a paramator */
 					const auto var_name = StrView{};//seekToNextWord(str, head, reserved_words_, operators_, kind);
-					if (kind != TokenClass::PARAM) {
+					if (kind != TokenKind::PARAM) {
 						//TODO コンパイルエラー処理
 					}
 					const auto name_place = std::make_pair(line, str.find(head));
@@ -206,7 +206,7 @@ namespace cym {
 			Str str;
 			for (const auto &i : to_infer_list_) {
 				str += i.first.name + u" = ";
-				str += i.second.toString<Str>([](const cym::Pair<cym::TokenClass, cym::Str> &p) {
+				str += i.second.toString<Str>([](const cym::Pair<cym::TokenKind, cym::Str> &p) {
 					return Str(u"[") + Str(cym::TokenClass_table[static_cast<std::size_t>(p.first)]) + Str(u",") + p.second + Str(u"]");
 				});
 			}

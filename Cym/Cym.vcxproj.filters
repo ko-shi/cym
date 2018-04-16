@@ -56,7 +56,10 @@
     <ClInclude Include="CymTCPair.hpp">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="CymHandBuffer.hpp">
+    <ClInclude Include="CymHandStack.hpp">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="CymNumConverter.hpp">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

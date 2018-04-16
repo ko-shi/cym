@@ -5,6 +5,9 @@
 #include<type_traits>
 
 #include"CymVector.hpp"
+#include"CymTCPair.hpp"
+
+
 
 namespace cym {
 
@@ -13,9 +16,7 @@ namespace cym {
 	using StrView = std::u16string_view;
 	using Stream = std::basic_stringstream<char16_t>;
 
-
-	template<class Int>
-	std::pair<bool/* succeed */, Int> toInteger(const Str &str);
+	Pair<bool, StrView> toUint(const StrView &,std::uint32_t&);
 
 	enum struct Endian {
 		BIG,
@@ -30,18 +31,20 @@ namespace cym {
 	}
 	const Endian native_endian = impl::check();
 
-	enum class TokenClass : std::uint8_t {
+	enum class TokenKind : std::uint8_t {
 		ERROR,
 		RESERVEDWORD, // var,func,class
 		PARAM, // param
 		NUMBER, // 1 or 2 and so on.
+		DECIMAL, // 1.14514
 		INFIX, // +,-,*,/,and so on.
 		FUNC, // func(), do()to() 
 		STRINGLITERAL, // "string literal"
 
 		EXPRESSION, // (a + b) it's on the way of converting
 
-		TYPEDETERMINED,
+
+		TYPEDETERMINED
 	};
 
 	constexpr Char* TokenClass_table[] = {
@@ -49,13 +52,14 @@ namespace cym {
 		u"reserved_word",
 		u"param",
 		u"number",
+		u"decimal",
 		u"sign",
 		u"func",
 		u"string_literal",
 		u"expression",
 	};
 	struct WordInfo {
-		TokenClass kind;
+		TokenKind kind;
 		Str name;
 		std::pair<std::size_t, std::size_t> place;
 
@@ -94,7 +98,9 @@ namespace cym {
 	ParamIdentifier makePIFromSingleStr(const Str &str) {// Make ClassIdentifier from single string. After '/' is name, before is name_space.
 		const auto order_pos = str.rfind(u'/');
 		const auto slash_pos = str.rfind(u'/');
-		return ParamIdentifier{ Str(str, 0, slash_pos),Str(str, slash_pos),toInteger<std::size_t>(Str(str,order_pos)).second };
+		std::uint32_t temp;
+		toUint(Str(str, order_pos), temp);
+		return ParamIdentifier{ Str(str, 0, slash_pos),Str(str, slash_pos),temp };
 	}
 	bool operator==(const ParamIdentifier &l, const ParamIdentifier &r) {
 		return l.scope == r.scope && l.name == r.name && l.order == r.order;

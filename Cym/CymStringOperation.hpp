@@ -8,42 +8,34 @@
 #include"CymTCPair.hpp"
 #include"CymDataTypes.hpp"
 
+#ifdef ERROR
+#	undef ERROR
+#endif
+
 
 namespace cym {
 	
 
 
-	template<class Int>
-	std::pair<bool/* succeed */, Int> toInteger(const Str &str) {
-		const auto func = [](const Str &s) {
-			Int num = 0;
-			for (const auto i : s) {
-				if (u'0' <= i && i <= u'9') {
-					num *= 10;
-					num += (i - u'0');
-				}
-				else {
-					return std::make_pair(false, num);
-				}
+	template<class F>
+	StrView takeWhile(const StrView &str, F &&f) {
+		// functional writiing is too slow!
+		std::size_t index = 0;
+		for (auto i : str) {
+			if (!f(i)) {
+				break;
 			}
-			return std::make_pair(true, num);
-		};
-		if (str.front() == u'-') {
-			if (std::is_unsigned_v<Int>) {
-				return func(str.substr(1));
-			}
-			auto old_num = func(str.substr(1));
-			old_num.second *= -1;
-			return old_num;
+			index++;
 		}
-		else {
-			return func(str);
-		}
+		return str.substr(0, index);
 	}
-	template<class Container>
-	StrView getBlock(const StrView &str,const Container &brackets) {
+	StrView getBlock(const StrView &str) {
+		const auto brackets = Vector<Pair<Char, Char>>{ { u'(',u')' },{ u'[',u']' },{ u'<',u'>' },{ u'{',u'}' } };
 		Stack<Char> stack;
 		std::size_t index = 0;
+		if (str[0] == u'"') {
+			return str.substr(0, takeWhile(str.substr(1), [](auto c) {return c != u'"'; }).size() + 2);
+		}
 		for (const auto &c : str) {
 			for (const auto &b : brackets) {
 				if (b.first == c) {
@@ -58,22 +50,11 @@ namespace cym {
 					}
 				}
 			}
+
 			index++;
 			if (stack.empty()) {
 				break;
 			}
-		}
-		return str.substr(0, index);
-	}
-	template<class F>
-	StrView takeWhile(const StrView &str, F &&f) {
-		// functional writiing is too slow!
-		std::size_t index = 0;
-		for (auto i : str) {
-			if (!f(i)) {
-				break;
-			}
-			index++;
 		}
 		return str.substr(0, index);
 	}
@@ -87,14 +68,13 @@ namespace cym {
 	StrView deleteSpace(const StrView &str) {
 		return getRemainedStr(str, takeWhile(str, [](auto c) {return c == u' '; }));
 	}
-	StrView takeArg(const StrView &str,bool can_delete_front_space = true) {
+	StrView takeToken(const StrView &str,bool can_delete_front_space = true) {
 		const auto specials = Vector<Char>{
 			u'(' ,u'[' ,u'{' ,u'"',u'<',
 			u'+' ,u'-' ,u'*' ,u'/' ,
 			u'.',
 			u',' ,u' '
 		};
-		const auto brackets = Vector<Pair<Char, Char>>{ { u'(',u')' },{ u'[',u']' },{ u'<',u'>' },{ u'{',u'}' },{ u'"',u'"' } };
 		const auto takeWhileName = [&](StrView word) {return takeWhile(word, [&](auto c) {return std::none_of(specials.begin(), specials.end(), [&](auto s) {return s == c; }); }); };
 		const auto word = can_delete_front_space ? 
 			deleteSpace(str)
@@ -102,6 +82,9 @@ namespace cym {
 		const auto name = takeWhileName(word);
 		const auto sign_part = getRemainedStr(str, name);
 
+		if (sign_part.empty()) {
+			return name;
+		}
 		switch (sign_part[0]) {
 		case u'+':
 		case u'-':
@@ -114,30 +97,37 @@ namespace cym {
 				return name;
 			}
 		case u'(': {
-			const auto bracket_part = getBlock(sign_part, brackets);
+			const auto bracket_part = getBlock(sign_part);
 			const auto next = getRemainedStr(str, bracket_part);
 			if (std::any_of(specials.begin() + 1/* + 1 for except '(' */, specials.end(), [&](Char c) {return c == next[0]; })) {
 				return rangeOf(name,bracket_part);
 			}
 			else {
-				return rangeOf(name, takeArg(next, false));// rangeOf is like operator+
+				return rangeOf(name, takeToken(next, false));// rangeOf is like operator+
 			}
 		}
 		case u',':
 		case u' ':
 			return name;
+		case u'"':
+		case u'[':
+			if (name.empty()) {
+				return getBlock(sign_part);
+			}
+			else {
+				return name;
+			}
 		}
 		return name;
 	}
 
 	StrView takeExpression(const StrView &str) {
-		const auto word = takeArg(str);
+		const auto word = takeToken(str);
 		const auto next_word = getRemainedStr(str, takeWhile(getRemainedStr(str, word), [](auto c) {return c == u' '; }));
 		return next_word.empty() || next_word[0] == u',' ? word : rangeOf(word, takeExpression(next_word));
 	}
-
 	Str repeat(const Str &str, std::size_t n, Str b = u"") {
-		return n == 0 ? b.pop_back(),b : repeat(str, n - 1, b + str + u',');
+		return n == 0 ? b : repeat(str, n - 1, b + str);
 	}
 	// 114514,yaju,MUR => @,@,@
 	Str replaceExpression(const StrView &str,int expr_num = 0) {
@@ -145,23 +135,54 @@ namespace cym {
 		const auto next = getRemainedStr(str, takeWhile(getRemainedStr(str, expr), [](auto c) {return c == u' ' || c == u','; }));
 		return next.empty() ? repeat(u"@",expr_num + 1): replaceExpression(next,expr_num + 1);
 	}
+	// This function's arg must be deleted the initial spaces.
+	Str toFuncName(const StrView &token, const Vector<StrView> &infixes) {
 
-	Str toFuncName(const StrView &str) {
+		if (std::find(infixes.begin(), infixes.end(), token) != infixes.end()) {
+			return Str(u"@") + Str(token) + u"@";
+		}
+
+
 		const auto specials = Vector<Char>{
 			u'(' ,u'[' ,u'{' ,u'"',u'<',
 			u'+' ,u'-' ,u'*' ,u'/' ,
 			u'.',
 			u',' ,u' '
 		};
-		const auto brackets = Vector<Pair<Char, Char>>{ { u'(',u')' },{ u'[',u']' },{ u'<',u'>' },{ u'{',u'}' },{ u'"',u'"' } };
 		const auto takeWhileName = [&](StrView word) {return takeWhile(word, [&](auto c) {return std::none_of(specials.begin(), specials.end(), [&](auto s) {return s == c; }); }); };
-		const auto name_part = takeWhileName(str);
-		const auto bracket_part = getBlock(getRemainedStr(str, name_part), brackets);
-		
+		const auto name_part = takeWhileName(token);
+		const auto bracket_part = getBlock(getRemainedStr(token, name_part));
+		if (bracket_part.empty() || bracket_part[0] != u'(') {
+			return Str(name_part);
+		}
+		const Str args_replaced = 
+			bracket_part.empty() ? 
+			Str()
+			: replaceExpression(bracket_part.substr(1,bracket_part.size() - 2));
+		const auto next = getRemainedStr(token, bracket_part);
 
-		return u"";
+		return Str(name_part) + args_replaced + toFuncName(next,infixes);
 	}
 
+	TokenKind getKind(const StrView &token/* please convert to StrView */, const Vector<StrView> &infixes) {
+		const auto result = toFuncName(token, infixes);
+		if (token.find(u'@') == token.npos) {
+			return TokenKind::PARAM;// NUMBER,DOUBLE
+		}
+		else if (token == u"@") {
+			return TokenKind::EXPRESSION;
+		}
+		else if(token.front() == u'@' && token.back() == u'@'){
+			const auto interval = token.substr(1, token.size() - 2);
+			if (interval.find(u'@') == interval.npos) {
+				return TokenKind::INFIX;
+			}
+			else {
+				return TokenKind::FUNC;
+			}
+		}
+		return TokenKind::FUNC;
+	}
 	int gl_num_if_it_means_number_in_take_word = 0;
 	/*
 	The first of signs must be '(' ,and

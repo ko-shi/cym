@@ -15,8 +15,8 @@ namespace cym {
 		}
 	};
 	template<class T,class Y>
-	Pair<T,Y> makePair(T &&l, Y &&r) {
-		return Pair<T, Y>(std::forward<T>(l), std::forward<Y>(r));
+	Pair<T,Y> makePair(const T &l, const Y &r) {
+		return Pair<T, Y>(l,r);
 	}
 }
 

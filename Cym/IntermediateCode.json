@@ -1,0 +1,48 @@
+{
+    "DefineFunction" : {
+        "Name" : "init@",
+        "Order" : [
+            {
+                "DefineParam" : {
+                    "Name" : "i",
+                    "Args" : [
+                        "i",
+                        "0"
+                    ]
+                    }
+            },
+            {
+                "Call" : {
+                    "Name" : "@:=@",
+                    "Args" : [
+                        "i",
+                        {
+                            "Name" : "@+@",
+                            "Args" : [
+                                {
+                                    "Name" : "max@@",
+                                    "Args" : [
+                                        10,
+                                        50
+                                    ]
+                                },
+                                {
+                                    "Name" : "min@@",
+                                    "Args" : [
+                                        10,
+                                        {
+                                            "Name" : "Int@",
+                                            "Args" : [
+                                                "114514"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}
