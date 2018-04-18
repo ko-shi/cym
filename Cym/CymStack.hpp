@@ -8,6 +8,8 @@ namespace cym {
 
 	template<class T,class Container = Vector<T>>
 	class Stack{
+	private:
+		using Size = std::size_t;
 	public:
 		Stack() : c_()
 		{
@@ -28,7 +30,7 @@ namespace cym {
 			return c_.isEmpty();
 		}
 
-		std::size_t size() const{
+		Size size() const{
 			return c_.size();
 		}
 
@@ -47,7 +49,7 @@ namespace cym {
 		auto pop(){
 			c_.popBack();
 		}
-		auto reserve(std::size_t size) {
+		auto reserve(Size size) {
 			return c_.reserve(size);
 		}
 		Container& get() {

@@ -8,7 +8,7 @@
 #include"CymStringView.hpp"
 
 namespace cym {
-	template<std::size_t N>//MaxByte
+	template<Size N>//MaxByte
 	class MultiByteChar {
 	private:
 		using Traits = std::char_traits<char>;
@@ -21,11 +21,11 @@ namespace cym {
 		MultiByteChar(const MultiByteChar&) = default;
 		MultiByteChar(MultiByteChar&&) = default;
 		/* for literal */
-		template<std::size_t N1>
+		template<Size N1>
 		constexpr MultiByteChar(const char(&str)[N1]) : MultiByteChar(str, std::make_index_sequence<N1>()) {
 
 		}
-		template<std::size_t N,std::size_t ...I>
+		template<Size N,Size ...I>
 		constexpr MultiByteChar(const char(&str)[N], std::index_sequence<I...>) : arr_{ str[I]... } {
 
 		}
@@ -34,13 +34,13 @@ namespace cym {
 			assign(str, size);
 		}
 		/* for operator[] or something like that */
-		MultiByteChar(const char *str, std::size_t size){
+		MultiByteChar(const char *str, Size size){
 			assign(str, size);
 		}
-		MultiByteChar(StringView str, std::size_t size){
+		MultiByteChar(StringView str, Size size){
 			assign(str.data(), size);
 		}
-		void* assign(const char *str, std::size_t size) {
+		void* assign(const char *str, Size size) {
 			std::memset(arr_.data() + size, 0, N - size);
 			return std::memcpy(arr_.data(), str, size);
 		}
@@ -50,11 +50,11 @@ namespace cym {
 		const char* data()const {
 			return arr_.data();
 		}
-		const char operator[](std::size_t pos)const {
+		const char operator[](Size pos)const {
 			return arr_[pos];
 		}
-		std::size_t size()const {
-			std::size_t size = 0;
+		Size size()const {
+			Size size = 0;
 			for (const auto &i : arr_) {
 				if(i != '\0')size++;
 			}
@@ -66,13 +66,13 @@ namespace cym {
 	};
 	struct U8Char : public MultiByteChar<4> {
 		using MultiByteChar::MultiByteChar;
-		std::size_t size()const {
+		Size size()const {
 			return arr_[3] == 0 ? (arr_[2] == 0 ? (arr_[1] == 0 ? (arr_[0] == 0 ? 0 : 1) : 2) : 3) : 4;
 		}
 	};
 	struct SJisChar : MultiByteChar<2> {
 		using MultiByteChar::MultiByteChar;
-		std::size_t size()const {
+		Size size()const {
 			return arr_[1] == 0 ? (arr_[0] == 0 ? 0 : 1) : 2;
 		}
 		bool isThisExternalChar()const {

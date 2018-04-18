@@ -40,7 +40,7 @@ namespace cym {
 	private:
 		const char* ptr_;
 	private:
-		SJisStringConstIterator helperOfOperatorPlus(std::size_t n, const char *ptr) const {
+		SJisStringConstIterator helperOfOperatorPlus(Size n, const char *ptr) const {
 			return n == 0 ? SJisStringConstIterator(ptr) : helperOfOperatorPlus(n - 1, ptr + Traits::getByteNumUnsafe(ptr));
 		}
 	public:
@@ -63,10 +63,10 @@ namespace cym {
 			const auto temp = ptr_;
 			return ptr_ += Traits::getByteNumUnsafe(ptr_), SJisStringConstIterator(temp);
 		}
-		SJisStringConstIterator& operator+=(std::size_t n) {
+		SJisStringConstIterator& operator+=(Size n) {
 			return n == 0 ? *this : SJisStringConstIterator::operator++(), SJisStringConstIterator::operator+=(n - 1);
 		}
-		SJisStringConstIterator operator+(std::size_t n)const {
+		SJisStringConstIterator operator+(Size n)const {
 			return helperOfOperatorPlus(n, ptr_);
 		}
 		bool operator==(const SJisStringConstIterator &itr)const {
@@ -103,7 +103,7 @@ namespace cym {
 		SJisString *str_p_;
 		char *ptr_;
 	private:
-		SJisStringIterator helperOfOperatorPlus(std::size_t n, char *ptr) const {
+		SJisStringIterator helperOfOperatorPlus(Size n, char *ptr) const {
 			return n == 0 ? SJisStringIterator(str_p_, ptr) : helperOfOperatorPlus(n - 1, ptr + Traits::getByteNumUnsafe(ptr));
 		}
 	public:
@@ -115,8 +115,8 @@ namespace cym {
 		SJisStringIterator operator++(int);
 		SJisStringIterator& operator--();
 		SJisStringIterator operator--(int);
-		SJisStringIterator& operator+=(std::size_t n);
-		SJisStringIterator operator+(std::size_t n)const;
+		SJisStringIterator& operator+=(Size n);
+		SJisStringIterator operator+(Size n)const;
 		bool operator==(const SJisStringIterator &itr)const;
 		bool operator!=(const SJisStringIterator &itr)const;
 		bool operator<(const SJisStringIterator &itr)const;
@@ -141,8 +141,8 @@ namespace cym {
 		friend SJisCharReplacer;
 	private:
 		std::unique_ptr<char[]> ptr_;
-		std::size_t size_;//文字の入ったメモリのバイト数。\0を含む
-		std::size_t capacity_;
+		Size size_;//文字の入ったメモリのバイト数。\0を含む
+		Size capacity_;
 	private:
 		char* data() {
 			return ptr_.get();
@@ -152,14 +152,14 @@ namespace cym {
 
 		}
 		SJisString(const char *str) {
-			std::size_t str_size = std::char_traits<char>::length(str) + 1;
+			Size str_size = std::char_traits<char>::length(str) + 1;
 			ptr_.reset(new char[str_size]);
 			size_ = str_size;
 			capacity_ = size();
 			memcpy(data(), str, size());
 		}
 		SJisString(const std::string &str) {
-			std::size_t str_size = str.size() + 1;
+			Size str_size = str.size() + 1;
 			ptr_.reset(new char[str_size]);
 			size_ = str_size;
 			capacity_ = size();
@@ -182,11 +182,11 @@ namespace cym {
 			return ptr_.get();
 		}
 		// getter of size_,included '\0'
-		std::size_t size() const {
+		Size size() const {
 			return size_;
 		}
 		// getter of capacity_
-		std::size_t capacity()const {
+		Size capacity()const {
 			return capacity_;
 		}
 		SJisString& setNull() {
@@ -197,7 +197,7 @@ namespace cym {
 			return 0 <= ptr - data() && ptr - data() < static_cast<std::ptrdiff_t>(size());
 		}
 		/* This ptr must satisfy isThisPointer() == true */
-		std::size_t fowardSize(const char *ptr)const {
+		Size fowardSize(const char *ptr)const {
 			return size() - (ptr - data());
 		}
 		bool isOnSecondByte(const char *ptr/*  It is necessary that isThisPointer() is true */) const {
@@ -234,7 +234,7 @@ namespace cym {
 			}
 			return Iterator();
 		}
-		SJisString& reserve(std::size_t s) {
+		SJisString& reserve(Size s) {
 			if (s > capacity_) {
 				capacity_ = s;
 				auto temp = std::make_unique<char[]>(capacity_);
@@ -245,7 +245,7 @@ namespace cym {
 		}
 		SJisString& pushBack(const SJisChar &ch) {
 			if (capacity_ < size() + ch.size()) {
-				reserve(static_cast<std::size_t>((size() + 2) * 1.5));
+				reserve(static_cast<Size>((size() + 2) * 1.5));
 			}
 			std::memcpy(data() + size() - 1, ch.data(), ch.size());
 			size_ += ch.size();
@@ -284,31 +284,31 @@ namespace cym {
 			setNull();
 			return *this;
 		}
-		SJisChar operator[](std::size_t n)const {
+		SJisChar operator[](Size n)const {
 			ConstIterator itr(data());
-			for (std::size_t i = 0; i < n; i++) {
+			for (Size i = 0; i < n; i++) {
 				itr++;
 			}
 			return *itr;
 		}
-		SJisCharReplacer operator[](std::size_t n) {
+		SJisCharReplacer operator[](Size n) {
 			Iterator itr(this,data());
-			for (std::size_t i = 0; i < n; i++) {
+			for (Size i = 0; i < n; i++) {
 				itr++;
 			}
 			return SJisCharReplacer(itr.ptr_, *this);
 		}
-		SJisChar at(std::size_t n)const {
+		SJisChar at(Size n)const {
 			ConstIterator itr(data());
-			for (std::size_t i = 0; i < n; i++) {
+			for (Size i = 0; i < n; i++) {
 				if (end() == itr++) {
 					return SJisChar();
 				}
 			}
 			return *itr;
 		}
-		std::size_t length() const {
-			std::size_t s = 0;
+		Size length() const {
+			Size s = 0;
 			for (ConstIterator itr = begin(); itr != end(); itr++) {
 				s++;
 			}
@@ -330,7 +330,7 @@ namespace cym {
 			}
 			return end();
 		}
-		template<std::size_t N>
+		template<Size N>
 		SJisStringIterator find(const char(&str)[N]) {
 			for (auto itr = begin(); itr != end(); itr++) {
 				if (std::memcmp(itr.ptr_, str, N - 1) == 0) {// -1 for '\0'
@@ -401,7 +401,7 @@ namespace cym {
 
 	}
 	SJisString& SJisCharReplacer::operator=(const SJisChar &ch) {
-		const auto old_size = static_cast<std::size_t>(parent.getByteNum(ptr));
+		const auto old_size = static_cast<Size>(parent.getByteNum(ptr));
 		if (old_size == ch.size()) {
 			std::memcpy(ptr, ch.data(), old_size);
 		}
@@ -469,13 +469,13 @@ namespace cym {
 		}
 		return SJisStringIterator(str_p_, old_ptr);
 	}
-	SJisStringIterator& SJisStringIterator::operator+=(std::size_t n) {
-		for (std::size_t i = 0; i < n; i++) {
+	SJisStringIterator& SJisStringIterator::operator+=(Size n) {
+		for (Size i = 0; i < n; i++) {
 			SJisStringIterator::operator++();
 		}
 		return *this;
 	}
-	SJisStringIterator SJisStringIterator::operator+(std::size_t n)const {
+	SJisStringIterator SJisStringIterator::operator+(Size n)const {
 		return helperOfOperatorPlus(n, ptr_);
 	}
 	bool SJisStringIterator::operator==(const SJisStringIterator &itr)const {

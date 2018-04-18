@@ -62,9 +62,15 @@
     <ClInclude Include="CymNumConverter.hpp">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="CymIntermediateCodeMaker.hpp">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="test.cym">
+      <Filter>ヘッダー ファイル</Filter>
+    </None>
+    <None Include="CymTree.hpp">
       <Filter>ヘッダー ファイル</Filter>
     </None>
   </ItemGroup>

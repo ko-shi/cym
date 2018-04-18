@@ -3,6 +3,8 @@
 
 #include<sstream>
 #include<type_traits>
+#include<unordered_map>
+
 
 #include"CymVector.hpp"
 #include"CymTCPair.hpp"
@@ -15,8 +17,13 @@ namespace cym {
 	using Str = std::u16string;
 	using StrView = std::u16string_view;
 	using Stream = std::basic_stringstream<char16_t>;
+	template<class Key,class T>
+	using Map = std::unordered_map<Key, T>;
+	using Int = std::int32_t;
+	using Uint = std::uint32_t;
+	using Size = std::size_t;
 
-	Pair<bool, StrView> toUint(const StrView &,std::uint32_t&);
+	Pair<bool, StrView> toUint(const StrView &,Uint&);
 
 	enum struct Endian {
 		BIG,
@@ -61,10 +68,10 @@ namespace cym {
 	struct WordInfo {
 		TokenKind kind;
 		Str name;
-		std::pair<std::size_t, std::size_t> place;
+		std::pair<Size, Size> place;
 
 		// option
-		std::size_t index_of_identifier;// index of Vector<FuncIdentifier or ParamIdentifier or ClassIdentifier>
+		Size index_of_identifier;// index of Vector<FuncIdentifier or ParamIdentifier or ClassIdentifier>
 
 	};
 	/* type infering types */
@@ -79,7 +86,7 @@ namespace cym {
 
 	struct FuncIdentifier {
 		Str scope;
-		Vector<std::size_t> args;// size_t is indexnof type
+		Vector<Size> args;// size_t is indexnof type
 		Str name;
 	};
 	bool operator==(const FuncIdentifier &l, const FuncIdentifier &r) {
@@ -88,7 +95,7 @@ namespace cym {
 	struct ParamIdentifier {
 		Str scope;
 		Str name;
-		std::size_t order;
+		Size order;
 		Str get()const {
 			Stream str;
 			str << order;
@@ -98,7 +105,7 @@ namespace cym {
 	ParamIdentifier makePIFromSingleStr(const Str &str) {// Make ClassIdentifier from single string. After '/' is name, before is name_space.
 		const auto order_pos = str.rfind(u'/');
 		const auto slash_pos = str.rfind(u'/');
-		std::uint32_t temp;
+		Uint temp;
 		toUint(Str(str, order_pos), temp);
 		return ParamIdentifier{ Str(str, 0, slash_pos),Str(str, slash_pos),temp };
 	}
@@ -141,10 +148,10 @@ namespace cym {
 			u"SUBSTITUTE",
 		};
 		union Data {
-			std::int32_t i32[2];
+			Int i32[2];
 			std::uint64_t u64;
 		} data;
-		Command(Id i, std::uint32_t d1, std::uint32_t d2) {
+		Command(Id i, Uint d1, Uint d2) {
 			id = i;
 			data.i32[0] = d1;
 			data.i32[1] = d2;
@@ -152,29 +159,29 @@ namespace cym {
 	};
 
 	struct FuncInfo {// This is in DoubleKeyMap.
-		std::size_t param_num;
-		std::size_t default_size;
+		Size param_num;
+		Size default_size;
 		Vector<Command> command;
 	};
 	struct ClassInfo {// This is in DoubleKeyMap.
-		std::size_t size;// The hole size for initialization. This means only member_value
-		std::size_t num_of_member_param;// How many the parent FuncInstance should reserve Vector<ParamPos>.
+		Size size;// The hole size for initialization. This means only member_value
+		Size num_of_member_param;// How many the parent FuncInstance should reserve Vector<ParamPos>.
 
-		Vector<std::size_t> param_indexes;// Member params. Vector of DoubleKeyMap of ClassInfo.
-		Vector<std::size_t> func_indexes;// Member functions. Vector of DoubleKeyMap of FuncInfo.
+		Vector<Size> param_indexes;// Member params. Vector of DoubleKeyMap of ClassInfo.
+		Vector<Size> func_indexes;// Member functions. Vector of DoubleKeyMap of FuncInfo.
 	};
 	struct ParamPos { // This is like pointer. The memory is allocated by the parent's FuncInstance or ClassInstance.
-		std::size_t info_index;// This is index of the DoubleKeyMap of ClassInfo.
-		std::size_t begin_of_memory;// This is index of the member param of memory 
-		std::size_t length;// All Param are treated as array.
+		Size info_index;// This is index of the DoubleKeyMap of ClassInfo.
+		Size begin_of_memory;// This is index of the member param of memory 
+		Size length;// All Param are treated as array.
 	};
 	struct FuncInstance {
-		std::size_t info_index;// This is index of the DoubleKeyMap of FuncInfo.
+		Size info_index;// This is index of the DoubleKeyMap of FuncInfo.
 
 		Vector<ParamPos> memory_use;// Vector's index is param index.
 		Vector<std::uint8_t> memory;
 
-		FuncInstance(std::size_t index, std::size_t param_num, std::size_t default_memory_size){
+		FuncInstance(Size index, Size param_num, Size default_memory_size){
 			info_index = index;
 			memory_use.resize(param_num);
 			// In constructor, memory is served but not assigned.
@@ -184,7 +191,7 @@ namespace cym {
 	};
 	struct ClassInstance {
 		Vector<ParamPos> member_value;
-		Vector<std::size_t> memory;
+		Vector<Size> memory;
 
 		std::vector<FuncInstance> member_func;
 	};

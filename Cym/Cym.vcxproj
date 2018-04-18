@@ -25,6 +25,7 @@
     <ClInclude Include="Cym.hpp" />
     <ClInclude Include="CymDataTypes.hpp" />
     <ClInclude Include="CymDoubleKeyMap.hpp" />
+    <ClInclude Include="CymIntermediateCodeMaker.hpp" />
     <ClInclude Include="CymMultiByteChar.hpp" />
     <ClInclude Include="CymNumConverter.hpp" />
     <ClInclude Include="CymShiftJisString.hpp" />
@@ -38,6 +39,7 @@
     <ClInclude Include="CymHandStack.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="CymTree.hpp" />
     <None Include="test.cym" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -111,9 +113,10 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

@@ -10,9 +10,11 @@ namespace cym {
 	public:
 		using iterator = T*;
 	private:
+		using Size = std::size_t;
+	private:
 		Allocator allocator_;
-		std::size_t size_;
-		std::size_t capacity_;
+		Size size_;
+		Size capacity_;
 		T* ptr_;
 	public:
 		Vector() : allocator_(), size_(0), capacity_(0), ptr_(nullptr) {
@@ -26,7 +28,7 @@ namespace cym {
 			v.ptr_ = nullptr;
 			
 		}
-		Vector(std::size_t capacity) : allocator_(), size_(0), capacity_(0), ptr_(nullptr) {
+		Vector(Size capacity) : allocator_(), size_(0), capacity_(0), ptr_(nullptr) {
 			reserve(capacity);
 		}
 		Vector(std::initializer_list<T> init) : allocator_(), size_(0), capacity_(0), ptr_(nullptr) {
@@ -82,7 +84,7 @@ namespace cym {
 		int popBack() {
 			return std::allocator_traits<Allocator>::destroy(allocator_, ptr_ + size_), size_--, 0;
 		}
-		int erase(std::size_t pos) {
+		int erase(Size pos) {
 			if (pos >= size_) {
 				return 0;
 			}
@@ -97,7 +99,7 @@ namespace cym {
 			std::memcpy(ptr_ + pos, ptr_ + pos + 1, sizeof(T) * (size_ - pos - 1));
 			return size_--, 0;
 		}
-		int erase(const std::pair<std::size_t/*pos*/, std::size_t/*diff*/> &range) {
+		int erase(const std::pair<Size/*pos*/, Size/*diff*/> &range) {
 			const auto sum = range.first + range.second;
 			if (sum > size_) {
 				return 0;
@@ -105,7 +107,7 @@ namespace cym {
 			std::memcpy(ptr_ + range.first, ptr_ + sum, sizeof(T) * (size_ - sum));
 			return size_ -= range.second, 0;
 		}
-		int reserve(std::size_t capacity) {
+		int reserve(Size capacity) {
 			if (capacity_ >= capacity)return 0;
 			const auto ptr = allocator_.allocate(capacity);
 			if (ptr_) {
@@ -114,18 +116,18 @@ namespace cym {
 			}
 			return capacity_ = capacity, ptr_ = ptr,0;
 		}
-		int addSize(std::size_t additional_size) {
+		int addSize(Size additional_size) {
 			if (size_ + additional_size > capacity_) {
 				return resize(size_ + additional_size);
 			}
 			return size_ += additional_size;
 		}
 
-		void reduceSize(std::size_t offset) {
+		void reduceSize(Size offset) {
 			size_ -= offset;
 		}
 
-		int resize(std::size_t size) {
+		int resize(Size size) {
 			if (capacity_ >= size) {
 				std::memset(ptr_ + size_, 0, sizeof(T) * (size - size_));
 				return capacity_ = size_ = size;
@@ -139,7 +141,7 @@ namespace cym {
 			std::memset(ptr_ + size_, 0, size - size_);
 			return capacity_ = size_ = size;
 		}
-		std::size_t size()const {
+		Size size()const {
 			return size_;
 		}
 		T* begin() {
@@ -154,10 +156,10 @@ namespace cym {
 		const T* end() const {
 			return ptr_ + size_;
 		}
-		T& operator[](std::size_t pos) {
+		T& operator[](Size pos) {
 			return pos >= size_ ? back() : ptr_[pos];
 		}
-		T operator[](std::size_t pos) const {
+		T operator[](Size pos) const {
 			return pos >= size_ ? back() : ptr_[pos];
 		}
 		T& front() {
@@ -214,13 +216,13 @@ namespace cym {
 		Vector() : Base() {
 
 		}
-		Vector(Vector &&v) : Base(v) {
+		Vector(Vector &&v) : Base(std::forward<Vector>(v)) {
 
 		}
-		Vector(const Vector &v) : Base(v) {
+		Vector(const Vector &v) : Base(std::forward<Vector>(v)) {
 
 		}
-		Vector(std::initializer_list<T> &&init) : Base(init) {
+		Vector(std::initializer_list<T> &&init) : Base(std::forward<Vector>(init)) {
 
 		}
 		decltype(auto) operator=(const Vector &v) {

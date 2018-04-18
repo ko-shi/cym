@@ -20,7 +20,7 @@ namespace cym {
 	template<class F>
 	StrView takeWhile(const StrView &str, F &&f) {
 		// functional writiing is too slow!
-		std::size_t index = 0;
+		Size index = 0;
 		for (auto i : str) {
 			if (!f(i)) {
 				break;
@@ -32,7 +32,7 @@ namespace cym {
 	StrView getBlock(const StrView &str) {
 		const auto brackets = Vector<Pair<Char, Char>>{ { u'(',u')' },{ u'[',u']' },{ u'<',u'>' },{ u'{',u'}' } };
 		Stack<Char> stack;
-		std::size_t index = 0;
+		Size index = 0;
 		if (str[0] == u'"') {
 			return str.substr(0, takeWhile(str.substr(1), [](auto c) {return c != u'"'; }).size() + 2);
 		}
@@ -126,7 +126,7 @@ namespace cym {
 		const auto next_word = getRemainedStr(str, takeWhile(getRemainedStr(str, word), [](auto c) {return c == u' '; }));
 		return next_word.empty() || next_word[0] == u',' ? word : rangeOf(word, takeExpression(next_word));
 	}
-	Str repeat(const Str &str, std::size_t n, Str b = u"") {
+	Str repeat(const Str &str, Size n, Str b = u"") {
 		return n == 0 ? b : repeat(str, n - 1, b + str);
 	}
 	// 114514,yaju,MUR => @,@,@
@@ -201,7 +201,7 @@ namespace cym {
 	Str showRPN(const T &rpn) {
 		Str str;
 		for (const auto &i : rpn) {
-			str += Str(TokenClass_table[static_cast<std::size_t>(i.first)]) + Str(u",") + Str(i.second) + Str(u"\n");
+			str += Str(TokenClass_table[static_cast<Size>(i.first)]) + Str(u",") + Str(i.second) + Str(u"\n");
 		}
 		return str;
 	}

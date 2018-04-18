@@ -18,15 +18,15 @@
 namespace cym {
 
 
-	Pair<bool, StrView> toUint(const StrView &str,std::uint32_t &out) {
+	Pair<bool, StrView> toUint(const StrView &str,Uint &out) {
 
-		using Limit = std::numeric_limits<std::uint32_t>;
+		using Limit = std::numeric_limits<Uint>;
 
 		const auto conv = [](const Vector<std::int8_t> &buf) {
-			std::uint32_t res = 0;
+			Uint res = 0;
 			for (auto i : buf) {
 				res *= 10;
-				res += std::uint32_t(i);
+				res += Uint(i);
 			}
 			return res;
 		};
@@ -47,27 +47,27 @@ namespace cym {
 		out = conv(buf);
 		return makePair(true,str);
 	}
-	Pair<bool, StrView> toInt(const StrView &str,std::int32_t &out) {
+	Pair<bool, StrView> toInt(const StrView &str,Int &out) {
 		if (str[0] == '-') {
-			std::uint32_t uout;
+			Uint uout;
 			const auto temp = toUint(str.substr(1),uout);
 			if (!temp.first) {
 				return makePair(false, StrView(u""));
 			}
-			out = -std::int32_t(uout);
+			out = -Int(uout);
 			return makePair(true, rangeOf(str,temp.second));
 		}
-		std::uint32_t uout;
+		Uint uout;
 		const auto temp = toUint(str,uout);
 		if (!temp.first) {
 			return makePair(false, StrView(u""));
 		}
-		out = std::int32_t(uout);
+		out = Int(uout);
 		return makePair(true,temp.second);
 	}
 
 	Pair<bool, StrView> toDouble(const StrView &str,double &out) {
-		const auto getDecimalPart = [](std::uint32_t i) {
+		const auto getDecimalPart = [](Uint i) {
 			double temp = 0.;
 			while (i > 0u) {
 				temp += i % 10;
@@ -78,7 +78,7 @@ namespace cym {
 		};
 
 		const auto until_period = takeWhile(str, [](Char c) {return c != u'.'; });
-		std::int32_t first_half_val;
+		Int first_half_val;
 		const auto first_half = toInt(until_period,first_half_val); 
 		if (!first_half.first) {
 			return makePair(false, StrView(u""));
@@ -92,7 +92,7 @@ namespace cym {
 			return makePair(false, first_half.second);
 		}
 		const auto after_period = remained.substr(1);
-		std::uint32_t last_half_value;
+		Uint last_half_value;
 		const auto last_half = toUint(after_period,last_half_value);
 		if (!last_half.first) {
 			return makePair(false, StrView(u""));

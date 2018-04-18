@@ -132,12 +132,12 @@ namespace cym {
 		}
 		return buf;
 	}
-	U8String toU8String(const char16_t *str,std::size_t size = -1) {
-		if (size == static_cast<std::size_t>(-1)) {
+	U8String toU8String(const char16_t *str,Size size = -1) {
+		if (size == static_cast<Size>(-1)) {
 			size = std::char_traits<char16_t>::length(str) + 1;
 		}
 		U8String buffer;
-		for (std::size_t i = 0; i < size; i++) {
+		for (Size i = 0; i < size; i++) {
 			buffer.pushBack(toU8Char(str[i]));
 		}
 		return buffer;

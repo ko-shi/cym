@@ -79,15 +79,15 @@ namespace cym {
 			const auto temp = ptr_;
 			return ptr_ += Traits::getByteNumUnsafe(ptr_), U8StringConstIterator(temp);
 		}
-		U8StringConstIterator& operator+=(std::size_t n) {
-			for (std::size_t i = 0; i < n; i++) {
+		U8StringConstIterator& operator+=(Size n) {
+			for (Size i = 0; i < n; i++) {
 				U8StringConstIterator::operator++();
 			}
 			return *this;
 		}
-		U8StringConstIterator operator+(std::size_t n)const {
+		U8StringConstIterator operator+(Size n)const {
 			U8StringConstIterator itr(ptr_);
-			for (std::size_t i = 0; i < n; i++) {
+			for (Size i = 0; i < n; i++) {
 				itr++;
 			}
 			return itr;
@@ -135,8 +135,8 @@ namespace cym {
 		U8StringIterator operator++(int);
 		U8StringIterator& operator--();
 		U8StringIterator operator--(int);
-		U8StringIterator& operator+=(std::size_t n);
-		U8StringIterator operator+(std::size_t n)const;
+		U8StringIterator& operator+=(Size n);
+		U8StringIterator operator+(Size n)const;
 		bool operator==(const U8StringIterator &itr)const;
 		bool operator!=(const U8StringIterator &itr)const;
 		bool operator<(const U8StringIterator &itr)const;
@@ -161,11 +161,11 @@ namespace cym {
 		friend U8CharReplacer;
 	private:
 		std::unique_ptr<char[]> ptr_;
-		std::size_t size_;//文字の入ったメモリのバイト数。\0を含む
-		std::size_t capacity_;
+		Size size_;//文字の入ったメモリのバイト数。\0を含む
+		Size capacity_;
 	private:
 	public:
-		template<std::size_t N>
+		template<Size N>
 		U8String(const char(&str)[N]) : ptr_(new char[N]), size_(N), capacity_(size_) {
 			std::memcpy(data(), str, N * sizeof(char));
 		}
@@ -186,17 +186,17 @@ namespace cym {
 		const char* data()const {
 			return ptr_.get();
 		}
-		std::size_t size()const{
+		Size size()const{
 			return size_;
 		}
-		std::size_t capacity()const {
+		Size capacity()const {
 			return capacity_;
 		}
 		U8String& setNull() {
 			data()[size() - 1] = '\0';
 			return *this;
 		}
-		U8String& reserve(std::size_t s) {
+		U8String& reserve(Size s) {
 			if (s > capacity()) {
 				capacity_ = s;
 				auto temp = new char[capacity()];
@@ -216,7 +216,7 @@ namespace cym {
 			return i;
 		}
 		/* This ptr must satisfy isThisPointer() == true */
-		std::size_t forwardSize(const char *ptr)const {
+		Size forwardSize(const char *ptr)const {
 			return size() - (ptr - data());
 		}
 		/* This ptr must satisfy isThisPointer() == true */
@@ -269,7 +269,7 @@ namespace cym {
 		}
 		U8String& pushBack(const U8Char &ch) {
 			if (capacity_ < size() + ch.size()) {
-				reserve(static_cast<std::size_t>((size() + 2) * 1.5));
+				reserve(static_cast<Size>((size() + 2) * 1.5));
 			}
 			std::memcpy(data() + size() - 1, ch.data(), ch.size());
 			size_ += ch.size();
@@ -308,31 +308,31 @@ namespace cym {
 			setNull();
 			return *this;
 		}
-		U8Char operator[](std::size_t n)const {
+		U8Char operator[](Size n)const {
 			ConstIterator itr(data());
-			for (std::size_t i = 0; i < n; i++) {
+			for (Size i = 0; i < n; i++) {
 				itr++;
 			}
 			return *itr;
 		}
-		U8CharReplacer operator[](std::size_t n) {
+		U8CharReplacer operator[](Size n) {
 			Iterator itr(this, data());
-			for (std::size_t i = 0; i < n; i++) {
+			for (Size i = 0; i < n; i++) {
 				itr++;
 			}
 			return U8CharReplacer(itr.ptr_, *this);
 		}
-		U8Char at(std::size_t n)const {
+		U8Char at(Size n)const {
 			ConstIterator itr(data());
-			for (std::size_t i = 0; i < n; i++) {
+			for (Size i = 0; i < n; i++) {
 				if (itr++ == end()) {
 					return U8Char();
 				}
 			}
 			return *itr;
 		}
-		std::size_t length()const {
-			std::size_t s = 0;
+		Size length()const {
+			Size s = 0;
 			for (ConstIterator itr = begin(); itr != end(); itr++) {
 				s++;
 			}
@@ -454,15 +454,15 @@ namespace cym {
 		}
 		return U8StringIterator(str_p_, old_ptr);
 	}
-	U8StringIterator& U8StringIterator::operator+=(std::size_t n) {
-		for (std::size_t i = 0; i < n; i++) {
+	U8StringIterator& U8StringIterator::operator+=(Size n) {
+		for (Size i = 0; i < n; i++) {
 			U8StringIterator::operator++();
 		}
 		return *this;
 	}
-	U8StringIterator U8StringIterator::operator+(std::size_t n)const {
+	U8StringIterator U8StringIterator::operator+(Size n)const {
 		U8StringIterator itr(str_p_,ptr_);
-		for (std::size_t i = 0; i < n; i++) {
+		for (Size i = 0; i < n; i++) {
 			itr++;
 		}
 		return itr;

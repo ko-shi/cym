@@ -3,11 +3,13 @@
 #include"Cym.hpp"
 #include"CymNumConverter.hpp"
 #include"CymHandStack.hpp"
+#include"CymTree.hpp"
 
 int main() {
 
 	
 	using namespace std::string_literals;
+	using namespace cym;
 	/*
 	std::fstream file("test.cym");
 
@@ -22,8 +24,10 @@ int main() {
 	project.run();
 	std::cout << cym::toSJisString(project.showIntermediateCode());
 	*/
+	/*
 	cym::TokenKind kind;
 	const auto a = cym::getNumKind(u"-114514.1919g",kind);
-
-	
+	*/
+	using namespace cym;
+	Tree tree(Str(u"–ìbæ”y"));
 }
