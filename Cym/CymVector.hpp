@@ -219,10 +219,10 @@ namespace cym {
 		Vector(Vector &&v) : Base(std::forward<Vector>(v)) {
 
 		}
-		Vector(const Vector &v) : Base(std::forward<Vector>(v)) {
+		Vector(const Vector &v) : Base(v) {
 
 		}
-		Vector(std::initializer_list<T> &&init) : Base(std::forward<Vector>(init)) {
+		Vector(std::initializer_list<T> &&init) : Base(init) {
 
 		}
 		decltype(auto) operator=(const Vector &v) {

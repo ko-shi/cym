@@ -5,6 +5,7 @@
 #include<variant>
 
 #include"CymDataTypes.hpp"
+#include"CymStringOperation.hpp"
 #include"CymVector.hpp"
 
 namespace cym {
@@ -20,7 +21,7 @@ namespace cym {
 	class Tree {
 	public:
 		using ObjectType = Map<Str, std::unique_ptr<Tree>>;
-		using ArrayType = Vector<std::unique_ptr<Tree>>;
+		using ArrayType = std::vector<std::unique_ptr<Tree>>;
 		using AllTypeVariant =
 			std::variant <
 			Str,
@@ -53,7 +54,13 @@ namespace cym {
 		template<class T,bool B = (!std::is_same_v<T,ObjectType>) && (!std::is_same_v<T, ObjectType>) ,std::enable_if_t<B,std::nullptr_t> = nullptr>
 		Tree(const T &data) {
 			data_ = data;
-		}/*
+		}
+	private:
+		template<class T>
+		T& get() {
+			return std::get<T>(data_);
+		}
+	public:
 		template<class T>
 		const T& get() const {
 			return std::get<T>(data_);
@@ -65,18 +72,19 @@ namespace cym {
 		template<class T>
 		void addWhenArray(T &&object) {
 			if (getWhichHas() == TreeTypes::ARRAY) {
-				get<ArrayType>().emplace_back(std::make_unique(std::move(object)));
+				get<ArrayType>().emplace_back(std::make_unique<T>(std::move(object)));
 			}
 		}
 		template<class T>
-		void addWhenObject(Str &&name, T &&object) {
+		void addWhenObject(const Str &name, T &&object) {
 			if (getWhichHas() == TreeTypes::OBJECT) {
-				get<ObjectType>().emplace(std::forward<Str>(name), std::make_unique<T>(std::move(object)));
+				get<ObjectType>().emplace(name, std::make_unique<T>(std::move(object)));
 			}
-		}*/
-		/*
-		Str getString() const{
-			const Str indent = u"    ";
+		}
+		
+		Str getJSON(Size indent_num = 1) const{
+			const auto single_indent = u"    ";
+			const Str indent = repeat(single_indent, indent_num);
 			Stream str;
 			switch (getWhichHas()) {
 			case TreeTypes::STRING:
@@ -98,31 +106,31 @@ namespace cym {
 				str << u"{";
 				Str temp;
 				for (const auto &i : get<ObjectType>()) {
-					temp += Str(u"\n\"") + indent + i.first + u"\"" + u" : " + i.second->getString() + u",";
+					temp += Str(u"\n") + indent + u"\"" + i.first + u"\"" + u" : " + i.second->getJSON(indent_num + 1) + u",";
 				}
 				if (!temp.empty()) {
 					temp.pop_back();
 				}
 				str << temp;
-				str << u"\n}";
+				str << u"\n" << repeat(single_indent,indent_num - 1) << u"}";
 			}
 				break;
 			case TreeTypes::ARRAY:
-				str << u"{";
+				str << u"[";
 				Str temp;
 				for (const auto &i : get<ArrayType>()) {
-					temp += Str(u"\n") + indent + i.get()->getString() + u",";
+					temp += Str(u"\n") + indent + i.get()->getJSON() + u",";
 				}
 				if (!temp.empty()) {
 					temp.pop_back();
 				}
 				str << temp;
-				str << u"\n}";
+				str << u"\n" << repeat(single_indent, indent_num - 1) << u"]";
 				break;
 			}
 			return str.str();
 		}
-		*/
+		
 	};
 }
 
