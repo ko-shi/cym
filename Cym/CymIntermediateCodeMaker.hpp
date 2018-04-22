@@ -12,15 +12,18 @@ namespace cym {
 		Tree icode_;
 		Tree init_order_;
 		Vector<Str> reserved_words_;
+		Vector<StrView> infixes_;
+		Map<StrView, Size> priority_;
 	public:
-		ICode() : icode_(Tree::ObjectType{}), init_order_(Tree::ArrayType{}),reserved_words_{ u"var" } {
-
+		ICode() : icode_(Tree::ObjectType{}), init_order_(Tree::ArrayType{}), reserved_words_{ u"var" }
+			, infixes_{ u"+",u"-",u"*",u"/" }, priority_{ { u"+",1 },{ u"-",1 },{ u"*",2 },{ u"/",2 } } {
+				
 		}
-		Vector<Pair<TokenKind,StrView>> getCallList(const StrView &expr,Map<StrView,Size> &priority) {
+		Vector<Pair<TokenKind,StrView>> convertToPolishNotation(const StrView &expr) {
 			Stack<StrView> stack;
 			Vector<Pair<TokenKind, StrView>> call_list;
 			for (auto token = takeToken(expr); !token.empty(); token = takeNextToken(expr, token)) {
-				const TokenKind kind = getTokenKind(token,{u"+",u"*"}, reserved_words_);
+				const TokenKind kind = getTokenKind(token,infixes_, reserved_words_);
 				switch (kind) {
 				case TokenKind::DECIMAL:
 				case TokenKind::NUMBER:
@@ -30,20 +33,17 @@ namespace cym {
 					break;
 				case TokenKind::FUNC:
 					call_list.emplaceBack(TokenKind::FUNC, token);
-					for (const auto i : listArgs(token)) {
-						call_list.pushBack(getCallList(i, priority));
-					}
 					break;
 				case TokenKind::EXPRESSION:
-					call_list.pushBack(getCallList(token.substr(1,token.size() - 2),priority));
+					call_list.emplaceBack(TokenKind::EXPRESSION, token);
 					break;
 				case TokenKind::INFIX:
 					if (stack.empty()) {
 						stack.push(token);
 						break;
 					}
-					const auto top = priority[stack.top()];
-					const auto current = priority[token];
+					const auto top = priority_[stack.top()];
+					const auto current = priority_[token];
 					if (top < current) {
 						for (auto seek_n = call_list.size() - stack.size() - 1; !stack.empty(); seek_n++) {
 							call_list.insert(seek_n, makePair(TokenKind::INFIX, stack.top()));
@@ -54,13 +54,64 @@ namespace cym {
 					else if (top >= current) {
 						stack.push(token);
 					}
+					break;
 				}
 			}
 			for (auto seek_n = call_list.size() - stack.size() - 1; !stack.empty(); seek_n++) {
 				call_list.insert(seek_n, makePair(TokenKind::INFIX, stack.top()));
 				stack.pop();
 			}
+			for (Size i = 0; i < call_list.size(); i++) {
+				if (call_list[i].first == TokenKind::FUNC) {
+					Size index = 1;
+					for (const auto arg : listArgs(call_list[i].second)) {
+						call_list.insert(i + index,convertToPolishNotation(arg));
+						index++;
+					}
+				}
+				else if (call_list[i].first == TokenKind::EXPRESSION) {
+					call_list.insert(i, convertToPolishNotation(call_list[i].second.substr(1, call_list[i].second.size() - 2)));
+				}
+			}
 			return call_list;
+		}
+		Tree convertPNToTree(Vector<Pair<TokenKind, StrView>>::iterator &itr, Size take_num) {
+			Tree tree(Tree::ArrayType{});
+			for (Size i = 0; i < take_num;i++,itr++) {
+				const auto name = itr->second;
+				switch (itr->first) {
+				case TokenKind::NUMBER:
+					tree.addWhenArray(Tree(toInt(name)));
+					break;
+				case TokenKind::DECIMAL:
+					tree.addWhenArray(Tree(toDouble(name)));
+					break;
+				case TokenKind::STRINGLITERAL:
+					tree.addWhenArray(Tree(Str(name)));
+					break;
+				case TokenKind::PARAM:{
+					Tree param_obj(Tree::ObjectType{});
+					param_obj.addWhenObject(u"Type", Tree(Str(u"Param")));
+					param_obj.addWhenObject(u"Name", Tree(Str(name)));
+					tree.addWhenArray(std::move(param_obj));
+					break;
+				}
+				case TokenKind::FUNC:
+				case TokenKind::INFIX:{
+					Tree func_obj(Tree::ObjectType{});
+					func_obj.addWhenObject(u"Type", Tree(Str(u"Func")));
+					const auto func_name = toFuncName(name, infixes_);
+					func_obj.addWhenObject(u"Name", Tree(func_name));
+					const auto arg_num = std::count(func_name.begin(), func_name.end(), u'@');
+					auto itr_temp = itr + 1;
+					func_obj.addWhenObject(u"Args", convertPNToTree(itr_temp, arg_num));
+					itr = itr_temp - 1;
+					tree.addWhenArray(std::move(func_obj));
+					break;
+				}
+				}
+			}
+			return tree;
 		}
 		void compileLine(const StrView &code) {
 			const auto token = takeToken(code);

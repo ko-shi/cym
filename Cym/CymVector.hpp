@@ -118,6 +118,14 @@ namespace cym {
 			ptr_[pos] = data;
 			size_++;
 		}
+		void insert(Size pos, const Vector<T> &data) {
+			if (capacity_ < size_ + data.size()) {
+				reserve(size_ + data.size());
+			}
+			std::memmove(ptr_ + pos + data.size(), ptr_ + pos, sizeof(T) * (size_ - pos));
+			std::memcpy(ptr_ + pos, data.data(), sizeof(T) * data.size());
+			size_ += data.size();
+		}
 		int reserve(Size capacity) {
 			if (capacity_ >= capacity)return 0;
 			const auto ptr = allocator_.allocate(capacity);

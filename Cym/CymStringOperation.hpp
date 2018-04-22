@@ -108,7 +108,7 @@ namespace cym {
 		case u'(': {
 			const auto bracket_part = getBlock(sign_part);
 			const auto next = getRemainedStr(str, bracket_part);
-			if (std::any_of(specials.begin() + 1/* + 1 for except '(' */, specials.end(), [&](Char c) {return c == next[0]; })) {
+			if (next.empty() || std::any_of(specials.begin() + 1/* + 1 for except '(' */, specials.end(), [&](Char c) {return c == next[0]; })) {
 				return rangeOf(name,bracket_part);
 			}
 			else {

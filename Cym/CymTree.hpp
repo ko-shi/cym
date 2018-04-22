@@ -116,7 +116,7 @@ namespace cym {
 				str << u"[";
 				Str temp;
 				for (const auto &i : get<ArrayType>()) {
-					temp += Str(u"\n") + indent + i.get()->getJSON() + u",";
+					temp += Str(u"\n") + indent + i.get()->getJSON(indent_num + 1) + u",";
 				}
 				if (!temp.empty()) {
 					temp.pop_back();

@@ -1,4 +1,5 @@
 ﻿#include<iostream>
+#include<chrono>
 #include<fstream>
 #include"Cym.hpp"
 #include"CymIntermediateCodeMaker.hpp"
@@ -20,8 +21,11 @@ int main() {
 		icode.compileLine(toU16String(toU8String(str)));
 	}
 	*/
-	Map<StrView, Size> p{ {u"+",1},{u"*",2} };
 	ICode i;
-	const auto r = i.getCallList(u"114514 * 2 + 810 * 3",p);
-	std::cout << r.toString<std::string>([](auto s) {return toSJisString(s.second).toString(); });
+	auto r = i.convertToPolishNotation(u"max(1,2) * min(3,4)");
+
+	auto itr = r.data();
+	const auto a = i.convertPNToTree(itr, 1);
+	std::cout << r.toString<std::string>([](auto s) {return toSJisString(s.second).toString(); }) << std::endl;
+	std::cout << a.getJSON() << std::endl;
 }
