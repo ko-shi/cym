@@ -4,6 +4,7 @@
 #include<string_view>
 #include<string>
 #include<deque>
+#include<variant>
 
 #include"CymTCPair.hpp"
 #include"CymDataTypes.hpp"
@@ -14,8 +15,7 @@
 
 
 namespace cym {
-	
-
+	Pair<std::variant<double,Int>, StrView> getNumKind(const StrView &str, TokenKind &kind);
 
 	template<class F>
 	StrView takeWhile(const StrView &str, F &&f) {
@@ -33,6 +33,7 @@ namespace cym {
 		const auto brackets = Vector<Pair<Char, Char>>{ { u'(',u')' },{ u'[',u']' },{ u'<',u'>' },{ u'{',u'}' } };
 		Stack<Char> stack;
 		Size index = 0;
+		if (str.empty())return str;
 		if (str[0] == u'"') {
 			return str.substr(0, takeWhile(str.substr(1), [](auto c) {return c != u'"'; }).size() + 2);
 		}
@@ -46,7 +47,7 @@ namespace cym {
 						stack.pop();
 					}
 					else {
-						return u"Error";
+						return StrView{};
 					}
 				}
 			}
@@ -61,9 +62,17 @@ namespace cym {
 	StrView getRemainedStr(const StrView &origin, const StrView &last_word) {
 		return origin.substr(last_word.data() + last_word.length() - origin.data());
 	}
+	StrView expandTail(const StrView &origin, const StrView &str,Size expand_num) {
+		return origin.data() + origin.size() < str.data() + str.size() + expand_num ?
+			str
+			: StrView(str.data(), str.size() + expand_num);
+	}
 	StrView rangeOf(const StrView &begin, const StrView &end) {
 		const auto a = StrView(begin.data(), (end.data() + end.size()) - begin.data());
 		return StrView(begin.data(), (end.data() + end.size()) - begin.data());
+	}
+	bool isSub(const StrView &str, const StrView &sub) {
+		return str.data() <= sub.data() && str.data() + str.size() >= sub.data() + str.size();
 	}
 	StrView deleteSpace(const StrView &str) {
 		return getRemainedStr(str, takeWhile(str, [](auto c) {return c == u' '; }));
@@ -120,11 +129,13 @@ namespace cym {
 		}
 		return name;
 	}
-
+	StrView takeNextToken(const StrView &origin,const StrView &last_token) {
+		return takeToken(getRemainedStr(origin, last_token));
+	}
 	StrView takeExpression(const StrView &str) {
 		const auto word = takeToken(str);
 		const auto next_word = getRemainedStr(str, takeWhile(getRemainedStr(str, word), [](auto c) {return c == u' '; }));
-		return next_word.empty() || next_word[0] == u',' ? word : rangeOf(word, takeExpression(next_word));
+		return word.empty() || next_word.empty() || next_word[0] == u',' ? word : rangeOf(word, takeExpression(next_word));
 	}
 	Str repeat(const Str &str, Size n, Str b = u"") {
 		return n == 0 ? b : repeat(str, n - 1, b + str);
@@ -155,31 +166,63 @@ namespace cym {
 		if (bracket_part.empty() || bracket_part[0] != u'(') {
 			return Str(name_part);
 		}
-		const Str args_replaced = 
-			bracket_part.empty() ? 
+		const Str args_replaced =
+			bracket_part.empty() ?
 			Str()
-			: replaceExpression(bracket_part.substr(1,bracket_part.size() - 2));
+			: replaceExpression(bracket_part.substr(1, bracket_part.size() - 2));
 		const auto next = getRemainedStr(token, bracket_part);
 
-		return Str(name_part) + args_replaced + toFuncName(next,infixes);
+		return Str(name_part) + args_replaced + toFuncName(next, infixes);
+	}
+	// This function's arg must be deleted the initial spaces.
+	Vector<StrView> listArgs(const StrView &func) {
+		const auto specials = Vector<Char>{
+			u'(' ,u'[' ,u'{' ,u'"',u'<',
+			u'+' ,u'-' ,u'*' ,u'/' ,
+			u'.',
+			u',' ,u' '
+		};
+		const auto takeWhileName = [&](StrView word) {return takeWhile(word, [&](auto c) {return std::none_of(specials.begin(), specials.end(), [&](auto s) {return s == c; }); }); };
+		const auto name_part = takeWhileName(func);
+		const auto bracket_part = getBlock(getRemainedStr(func, name_part));
+		if (bracket_part.empty() || bracket_part[0] != u'(') {
+			return Vector<StrView>{};
+		}
+		const auto bracket_content = bracket_part.size() <= 2 ? 
+			StrView{}
+		: bracket_part.substr(1, bracket_part.size() - 2);
+		Vector<StrView> list;
+		for (StrView expr = takeExpression(bracket_content); !expr.empty();
+			expr = takeExpression(getRemainedStr(bracket_content,expandTail(bracket_content,expr,1)))) {
+			list.emplaceBack(expr);
+		}
+		const auto next = getRemainedStr(func, bracket_part);
+		list.pushBack(listArgs(next));
+		return list;
 	}
 
-	TokenKind getKind(const StrView &token/* please convert to StrView */, const Vector<StrView> &infixes) {
-		const auto result = toFuncName(token, infixes);
-		if (token.find(u'@') == token.npos) {
-			return TokenKind::PARAM;// NUMBER,DOUBLE
+	TokenKind getTokenKind(const StrView &token/* please convert to StrView */, const Vector<StrView> &infixes,const Vector<Str> &reserved_words) {
+		TokenKind kind;
+		getNumKind(token, kind);
+		if (kind != TokenKind::ERROR) {
+			return kind;
 		}
-		else if (token == u"@") {
+		if (token.size() >= 2 && token[0] == u'"' && token.back() == u'"') {
+			return TokenKind::STRINGLITERAL;
+		}
+		if (std::find(reserved_words.begin(), reserved_words.end(), Str(token)) != reserved_words.end()) {
+			return TokenKind::RESERVEDWORD;
+		}
+		if (std::find(infixes.begin(), infixes.end(), Str(token)) != infixes.end()) {
+			return TokenKind::INFIX;
+		}
+
+		const Str result = toFuncName(token, infixes);
+		if (result.find(u'@') == result.npos) {
+			return TokenKind::PARAM;
+		}
+		else if (result == u"@") {
 			return TokenKind::EXPRESSION;
-		}
-		else if(token.front() == u'@' && token.back() == u'@'){
-			const auto interval = token.substr(1, token.size() - 2);
-			if (interval.find(u'@') == interval.npos) {
-				return TokenKind::INFIX;
-			}
-			else {
-				return TokenKind::FUNC;
-			}
 		}
 		return TokenKind::FUNC;
 	}

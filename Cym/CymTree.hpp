@@ -39,9 +39,6 @@ namespace cym {
 		Tree() {
 			data_ = nullptr;
 		}
-		Tree(const Tree &tree) {
-
-		}
 		Tree(Tree &&tree) : data_(std::move(tree.data_)){
 
 		}

@@ -107,6 +107,17 @@ namespace cym {
 			std::memcpy(ptr_ + range.first, ptr_ + sum, sizeof(T) * (size_ - sum));
 			return size_ -= range.second, 0;
 		}
+		void pushFront(const T &data) {
+			insert(0, data);
+		}
+		void insert(Size pos, const T &data) {
+			if (capacity_ < size_ + 1) {
+				reserve(capacity_ + 1);
+			}
+			std::memmove(ptr_ + pos + 1, ptr_ + pos, sizeof(T) * (size_ - pos));
+			ptr_[pos] = data;
+			size_++;
+		}
 		int reserve(Size capacity) {
 			if (capacity_ >= capacity)return 0;
 			const auto ptr = allocator_.allocate(capacity);

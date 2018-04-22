@@ -65,8 +65,12 @@ namespace cym {
 		out = Int(uout);
 		return makePair(true,temp.second);
 	}
-
-	Pair<bool, StrView> toDouble(const StrView &str,double &out) {
+	Int toInt(const StrView &str) {
+		Int i = 0;
+		toInt(str, i);
+		return i;
+	}
+	Pair<bool, StrView> toDouble(const StrView &str,double &out,Int *out_int = nullptr) {
 		const auto getDecimalPart = [](Uint i) {
 			double temp = 0.;
 			while (i > 0u) {
@@ -89,6 +93,7 @@ namespace cym {
 		const auto remained = getRemainedStr(str, until_period);
 		if (remained.empty()) {
 			out = buf;
+			if (out_int)*out_int = first_half_val;
 			return makePair(false, first_half.second);
 		}
 		const auto after_period = remained.substr(1);
@@ -97,25 +102,31 @@ namespace cym {
 		if (!last_half.first) {
 			return makePair(false, StrView(u""));
 		}
+		if(out_int)*out_int = first_half_val;
 		out = buf + getDecimalPart(last_half_value);
 		return makePair(true,rangeOf(str,last_half.second));
 	}
-
-	Pair<double,StrView> getNumKind(const StrView &str,TokenKind &kind) {
+	double toDouble(const StrView &str) {
+		double d = 0.;
+		toDouble(str, d);
+		return d;
+	}
+	Pair<std::variant<double, Int>,StrView> getNumKind(const StrView &str,TokenKind &kind) {
 		double result;
-		const auto try_double = toDouble(str,result);
+		Int result_if_int;
+		const auto try_double = toDouble(str,result,&result_if_int);
 		if (!try_double.first) {
 			if (try_double.second.empty()) {
 				kind = TokenKind::ERROR;
-				return makePair(0.,StrView(u""));
+				return makePair(std::variant<double, Int>(0.),StrView(u""));
 			}
 			else {
 				kind = TokenKind::NUMBER;
-				return makePair(result, try_double.second);
+				return makePair(std::variant<double, Int>(result_if_int), try_double.second);
 			}
 		}
 		kind = TokenKind::DECIMAL;
-		return makePair(result,try_double.second);
+		return makePair(std::variant<double, Int>(result),try_double.second);
 	}
 
 }
