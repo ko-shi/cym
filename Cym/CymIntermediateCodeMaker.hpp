@@ -9,6 +9,7 @@ namespace cym {
 
 	class ICode {
 	private:
+	public:
 		Tree icode_;
 		Tree init_order_;
 		Vector<Str> reserved_words_;
@@ -75,6 +76,12 @@ namespace cym {
 			}
 			return call_list;
 		}
+		Tree getParamTree(const Str &name) {
+			Tree tree(Tree::ObjectType{});
+			tree.addWhenObject(u"Type", Tree(Str(u"Param")));
+			tree.addWhenObject(u"Name", Tree(name));
+			return tree;
+		}
 		Tree convertPNToTree(Vector<Pair<TokenKind, StrView>>::iterator &itr, Size take_num) {
 			Tree tree(Tree::ArrayType{});
 			for (Size i = 0; i < take_num;i++,itr++) {
@@ -90,10 +97,7 @@ namespace cym {
 					tree.addWhenArray(Tree(Str(name)));
 					break;
 				case TokenKind::PARAM:{
-					Tree param_obj(Tree::ObjectType{});
-					param_obj.addWhenObject(u"Type", Tree(Str(u"Param")));
-					param_obj.addWhenObject(u"Name", Tree(Str(name)));
-					tree.addWhenArray(std::move(param_obj));
+					tree.addWhenArray(getParamTree(Str(name)));
 					break;
 				}
 				case TokenKind::FUNC:
@@ -122,13 +126,22 @@ namespace cym {
 					const auto name = takeNextToken(code, token);
 					const auto equal = takeNextToken(code, name);
 					if (equal == u"=") {
-						Tree constructor(Tree::ObjectType{});/*
-						constructor.addWhenObject(u"Name", Str(name));
-						constructor.addWhenObject(u"Args", );
+						const auto init_expr = takeNextToken(code, equal);
+						auto pn = convertToPolishNotation(init_expr);
+						auto pn_itr = pn.begin();
+						auto expr_tree_arr = convertPNToTree(pn_itr, 1);
+						auto &expr_tree = expr_tree_arr.get<Tree::ArrayType>()[0];
+						
+						Tree arg(Tree::ArrayType{});
+						arg.addWhenArray(getParamTree(Str(name)));
+						arg.addWhenArray(std::move(*expr_tree));
+						Tree constructor(Tree::ObjectType{});
+						constructor.addWhenObject(u"Name", Tree(Str(name)));
+						constructor.addWhenObject(u"Args", std::move(arg));
 						Tree define_param(Tree::ObjectType{});
-						define_param.addWhenObject(u"Kind", u"DefineParam");
-						define_param.addWhenObject(u"DefineParma",)
-						init_order_.addWhenArray()*/
+						define_param.addWhenObject(u"Kind", Tree(Str(u"DefineParam")));
+						define_param.addWhenObject(u"DefineParam", std::move(constructor));
+						init_order_.addWhenArray(std::move(define_param));
 					}
 					else {
 

@@ -53,6 +53,7 @@ namespace cym {
 			data_ = data;
 		}
 	private:
+	public:
 		template<class T>
 		T& get() {
 			return std::get<T>(data_);
