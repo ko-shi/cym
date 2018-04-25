@@ -1,0 +1,5 @@
+func sum(var left,var right)
+    ret left + right
+
+var i = 0
+i := sum(i,2)

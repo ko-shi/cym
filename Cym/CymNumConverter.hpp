@@ -31,6 +31,10 @@ namespace cym {
 			return res;
 		};
 
+		if (str.empty()) {
+			return makePair(false, StrView(u""));
+		}
+
 		Vector<std::int8_t> buf(Limit::digits10);
 		for (auto i : str) {
 			if (u'0' <= i && i <= u'9') {
@@ -48,6 +52,9 @@ namespace cym {
 		return makePair(true,str);
 	}
 	Pair<bool, StrView> toInt(const StrView &str,Int &out) {
+		if (str.empty()) {
+			return makePair(false, StrView(u""));
+		}
 		if (str[0] == '-') {
 			Uint uout;
 			const auto temp = toUint(str.substr(1),uout);

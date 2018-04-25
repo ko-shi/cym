@@ -40,6 +40,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="CymTree.hpp" />
+    <None Include="infix-operators.cymi" />
     <None Include="test.cym" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

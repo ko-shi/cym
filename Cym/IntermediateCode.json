@@ -1,48 +1,70 @@
-{
-    "DefineFunction" : {
+[
+    {
+        "Kind" : "DefineFunc",
         "Name" : "init@",
         "Order" : [
             {
-                "DefineParam" : {
-                    "Name" : "i",
-                    "Args" : [
-                        "i",
-                        "0"
-                    ]
+                "Kind" : "DefineFunc",
+                
+                "Name" : "sum@@",
+                "Order" : [
+                    {
+                        "Kind" : "DefineArg",
+                        "Name" : [
+                            "left",
+                            "right"
+                        ]
+                    },
+                    {
+                        "Kind" : "ReturnFunc",
+                        "Name" : "@+@",
+                        "Args" : [
+                            {
+                                "Kind" : "Param",
+                                "Name" : "left"
+                            },
+                            {
+                                "Kind" : "Param",
+                                "Name" : "right"
+                            }
+                        ]
                     }
+                ]                    
+                
             },
             {
-                "Call" : {
-                    "Name" : "@:=@",
-                    "Args" : [
-                        "i",
-                        {
-                            "Name" : "@+@",
-                            "Args" : [
-                                {
-                                    "Name" : "max@@",
-                                    "Args" : [
-                                        10,
-                                        50
-                                    ]
-                                },
-                                {
-                                    "Name" : "min@@",
-                                    "Args" : [
-                                        10,
-                                        {
-                                            "Name" : "Int@",
-                                            "Args" : [
-                                                "114514"
-                                            ]
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                    ]
-                }
+                "Kind" : "DefineParam",
+                "Name" : "i",
+                "Cons" : [
+                    {
+                        "Kind" : "Param",
+                        "Name" : "i"
+                    },
+                    0
+                ]
+                
+            },
+            {
+                "Kind" : "Call",
+                "Name" : "@:=@",
+                "Args" : [
+                    {
+                        "Kind" : "Param",
+                        "Name" : "i"
+                    },
+                    {
+                        "Kind" : "Func",
+                        "Name" : "sum@@",
+                        "Args" : [
+                            {
+                                "Kind" : "Param",
+                                "Name" : "i"
+                            },
+                            2
+                        ]
+                    }
+                ]
             }
         ]
     }
-}
+]

@@ -128,6 +128,9 @@ namespace cym {
 	std::u16string toU16String(const U8String &str) {
 		std::u16string buf;
 		for (auto itr = str.begin(); itr != str.end(); itr++) {
+			if (toU32Ch(*itr) == u'\0') {
+				break;
+			}
 			buf.push_back(toU16Ch(toU32Ch(*itr)));
 		}
 		return buf;
