@@ -1,5 +1,6 @@
 func sum(var a,var b)
-    ret a + b
+    ret a + 
+    b
 
 var i = 0
 i := sum(i,1)

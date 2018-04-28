@@ -25,8 +25,9 @@ int main() {
 	std::fstream file("test.cym");
 
 	while (std::getline(file, str)) {
-		icode.compileLine(toU16String(toU8String(str)));
+		icode.addLine(toU16String(toU8String(str)));
 	}
+	icode.compile();
 	std::cout << icode.icode_.getJSON();
 	
 }

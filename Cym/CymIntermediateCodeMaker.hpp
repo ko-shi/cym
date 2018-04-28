@@ -13,14 +13,16 @@ namespace cym {
 	private:
 	public:
 		Tree icode_;
+		Vector<Str> code_;
 		Vector<Tree*> scope_;
 		Vector<Str> reserved_words_;
 		Vector<StrView> infixes_;
 		Map<StrView, Size> priority_;
 		std::deque<Str> infixes_buffer_;
 		const StrView single_indent_ = StrView(u"    ");
+		Str multi_line_buffer;
 	public:
-		ICode() : icode_(Tree::ArrayType{}), reserved_words_{ u"var",u"func",u"ret" }
+		ICode() : icode_(Tree::ArrayType{}), code_{},reserved_words_ { u"var", u"func", u"ret" }
 			, infixes_{ u"+",u"-",u"*",u"/" }, priority_{ { u"+",1 },{ u"-",1 },{ u"*",2 },{ u"/",2 } } {
 
 			Tree init(Tree::ObjectType{});
@@ -138,12 +140,39 @@ namespace cym {
 			auto expr_tree_arr = convertPNToTree(pn_itr, 1);
 			return Tree(std::move(*expr_tree_arr.get<Tree::ArrayType>()[0]));
 		}
-		void compileLine(const StrView &code) {
+		bool isFollowing(StrView str) const{
+			const auto token = takeWhile(str, [](Char c) {return c != u' '; });
+			if (std::find(infixes_.begin(), infixes_.end(), token) != infixes_.end()) {
+				return true;
+			}
+			if (!token.empty() && token[0] == u',') {
+				return true;
+			}
+			return false;
+		}
+		void addLine(StrView code) {
+			if (isFollowing(code)) {
+				if (code_.empty()) {
+					// コンパイルエラー
+				}
+				else {
+					code_.back() += code;
+				}
+			}
+			else {
+				code_.emplace_back(code);
+			}
+		}
+		void compileLine(StrView code) {
 			Size indent_level = countStr(code, single_indent_);
 			Size cur_scope_level = scope_.size() - 1;
 			if (cur_scope_level < indent_level) {
 				// TODO : エラー　定義された階層以上のインデント
 				return;
+			}
+			// コメント
+			if (const auto pos = code.find(u"//"); pos != code.npos) {
+				code = code.substr(0, pos);
 			}
 			if (cur_scope_level > indent_level) {
 				if (getRemainedStr(code, takeWhile(code, [](Char c) {return c == u' '; })).empty()) {
@@ -227,6 +256,11 @@ namespace cym {
 				tree.get<Tree::ObjectType>()[u"Kind"]->get<Str>() = u"Call";
 				current_scope->addWhenArray(std::move(tree));
 			}
+			}
+		}
+		void compile() {
+			for (const auto &s : code_) {
+				compileLine(StrView(s));
 			}
 		}
 	};
