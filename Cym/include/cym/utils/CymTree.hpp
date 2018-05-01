@@ -4,9 +4,9 @@
 #include<utility>
 #include<variant>
 
-#include"CymDataTypes.hpp"
-#include"CymStringOperation.hpp"
-#include"CymVector.hpp"
+#include<cym/utils/CymTCPair.hpp>
+#include<cym/utils/CymVector.hpp>
+#include<cym/CymBase.hpp>
 
 namespace cym {
 	enum class TreeTypes {

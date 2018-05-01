@@ -4,6 +4,8 @@
 #include<unordered_map>
 #include<vector>
 
+#include<cym/CymBase.hpp>
+
 namespace cym {
 
 	/*
@@ -13,8 +15,6 @@ namespace cym {
 	*/
 	template<class Key,class T,class Hasher = std::hash<Key>>
 	struct DoubleKeyMap {
-	private:
-		using Size = std::size_t;
 	public:
 		std::vector<T> indexed;// data is here
 		std::unordered_map<Key, Size,Hasher> link;// there is the link to data index fron key

@@ -1,6 +1,8 @@
-func sum(var a,var b)
-    ret a + 
-    b
+cls A
+    (var a,var b)
+
+func to(var b)
+    plus(b,t)
+    ret b
 
 var i = 0
-i := sum(i,1)

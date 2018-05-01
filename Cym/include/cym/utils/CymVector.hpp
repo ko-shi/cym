@@ -4,6 +4,8 @@
 #include<vector>
 #include<type_traits>
 
+#include<cym/CymBase.hpp>
+
 namespace cym {
 	template<class T, class Allocator = std::allocator<T>, bool B = std::is_trivially_copyable_v<T>>
 	class Vector {

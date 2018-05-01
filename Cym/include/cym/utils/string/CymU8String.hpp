@@ -7,8 +7,7 @@
 #include<bitset>
 #include<variant>
 
-#include"CymMultiByteChar.hpp"
-#include"CymStringView.hpp"
+#include<cym/utils/string/CymMultiByteChar.hpp>
 
 namespace cym {
 	struct U8StringTraits {

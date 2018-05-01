@@ -6,8 +6,7 @@
 #include<string>
 #include<ostream>
 
-#include"CymStringView.hpp"
-#include"CymMultiByteChar.hpp"
+#include<cym/utils/string/CymMultiByteChar.hpp>
 
 namespace cym {
 	struct  SJisStringTraits {
@@ -356,7 +355,7 @@ namespace cym {
 			}
 			return end();
 		}
-		Iterator find(const StringView &str) {
+		Iterator find(const std::string_view &str) {
 			for (auto itr = begin(); itr != end(); itr++) {
 				if (std::memcmp(itr.ptr_, str.data(), str.size() - 1) == 0) {// -1 for '\0'
 					return itr;

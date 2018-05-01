@@ -22,24 +22,23 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Cym.hpp" />
-    <ClInclude Include="CymDataTypes.hpp" />
-    <ClInclude Include="CymDoubleKeyMap.hpp" />
-    <ClInclude Include="CymIntermediateCodeMaker.hpp" />
-    <ClInclude Include="CymMultiByteChar.hpp" />
-    <ClInclude Include="CymNumConverter.hpp" />
-    <ClInclude Include="CymShiftJisString.hpp" />
-    <ClInclude Include="CymStack.hpp" />
-    <ClInclude Include="CymStringConverter.hpp" />
-    <ClInclude Include="CymStringOperation.hpp" />
-    <ClInclude Include="CymStringView.hpp" />
-    <ClInclude Include="CymTCPair.hpp" />
-    <ClInclude Include="CymU8String.hpp" />
-    <ClInclude Include="CymVector.hpp" />
-    <ClInclude Include="CymHandStack.hpp" />
+    <ClInclude Include="include\cym\Cym.hpp" />
+    <ClInclude Include="include\cym\CymBase.hpp" />
+    <ClInclude Include="include\cym\lang\CymIntermediateCodeMaker.hpp" />
+    <ClInclude Include="include\cym\parser\CymStringOperation.hpp" />
+    <ClInclude Include="include\cym\utils\CymDoubleKeyMap.hpp" />
+    <ClInclude Include="include\cym\utils\CymHandStack.hpp" />
+    <ClInclude Include="include\cym\utils\CymNumConverter.hpp" />
+    <ClInclude Include="include\cym\utils\CymStack.hpp" />
+    <ClInclude Include="include\cym\utils\CymTCPair.hpp" />
+    <ClInclude Include="include\cym\utils\CymTree.hpp" />
+    <ClInclude Include="include\cym\utils\CymVector.hpp" />
+    <ClInclude Include="include\cym\utils\string\CymMultiByteChar.hpp" />
+    <ClInclude Include="include\cym\utils\string\CymShiftJisString.hpp" />
+    <ClInclude Include="include\cym\utils\string\CymStringConverter.hpp" />
+    <ClInclude Include="include\cym\utils\string\CymU8String.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="CymTree.hpp" />
     <None Include="infix-operators.cymi" />
     <None Include="test.cym" />
   </ItemGroup>
@@ -117,7 +116,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\koshi_000\Documents\Cym\Cym\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

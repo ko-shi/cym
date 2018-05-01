@@ -2,10 +2,10 @@
 #define CYM_NUM_CONVERTER_HPP
 
 #include<limits>
-#include"CymTCPair.hpp"
-#include"CymVector.hpp"
-#include"CymStringOperation.hpp"
-#include"CymDataTypes.hpp"
+#include<cym/CymBase.hpp>
+#include<cym/utils/CymVector.hpp>
+#include<cym/utils/CymTCPair.hpp>
+#include<cym/parser/CymStringOperation.hpp>
 
 #ifdef  max
 

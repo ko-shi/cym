@@ -4,15 +4,15 @@
 #include<string>
 #include<memory>
 
-#include"CymU8String.hpp"
-#include"CymShiftJisString.hpp"
+#include<cym/utils/string/CymU8String.hpp>
+#include<cym/utils/string/CymShiftJisString.hpp>
 
 #if defined(_WIN32) || defined(_WIN64)
-#include<Windows.h>
+#	include<Windows.h>
 #elif defined(__linux__)
-#include <iconv.h>
+#	error ""
 #elif defined(__APPLE__)
-
+#	error ""
 #endif
 
 

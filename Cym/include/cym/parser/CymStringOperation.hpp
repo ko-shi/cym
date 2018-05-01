@@ -4,10 +4,12 @@
 #include<string_view>
 #include<string>
 #include<deque>
+#include<algorithm>
 #include<variant>
 
-#include"CymTCPair.hpp"
-#include"CymDataTypes.hpp"
+#include<cym/CymBase.hpp>
+#include<cym/utils/CymStack.hpp>
+#include<cym/utils/CymTCPair.hpp>
 
 #ifdef ERROR
 #	undef ERROR
@@ -228,7 +230,7 @@ namespace cym {
 			if (s.find(u'@') == s.npos) {
 				return TokenKind::PARAM;
 			}
-			else if (s == u"@") {
+			else if (std::all_of(s.begin(), s.end(), [](Char c) {return c == u'@'; })) {
 				return TokenKind::EXPRESSION;
 			}
 			return TokenKind::FUNC;

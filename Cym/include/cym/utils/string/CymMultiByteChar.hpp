@@ -5,7 +5,7 @@
 #include<cstdint>
 #include<array>
 
-#include"CymStringView.hpp"
+#include<cym/CymBase.hpp>
 
 namespace cym {
 	template<Size N>//MaxByte
@@ -37,7 +37,7 @@ namespace cym {
 		MultiByteChar(const char *str, Size size){
 			assign(str, size);
 		}
-		MultiByteChar(StringView str, Size size){
+		MultiByteChar(std::string_view str, Size size){
 			assign(str.data(), size);
 		}
 		void* assign(const char *str, Size size) {

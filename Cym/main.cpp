@@ -1,11 +1,8 @@
 ﻿#include<iostream>
 #include<chrono>
 #include<fstream>
-#include"Cym.hpp"
-#include"CymIntermediateCodeMaker.hpp"
-#include"CymNumConverter.hpp"
-#include"CymHandStack.hpp"
-#include"CymTree.hpp"
+
+#include<cym/Cym.hpp>
 
 int main() {
 

@@ -19,3 +19,13 @@ ifx (Pos p1)+(Pos p2)
 let p1 = Pos(114514,810)
 let p2 = Pos()
 let p3 = p1 + Pos(364,364)
+// =演算子は右辺の型のサイズを確保した領域にコンストラクタを適用させる
+
+// 型制約式
+
+type T = req.x & req.y & pro(self + self)
+
+let is_vec<T> = true
+let is_vec<var> = false
+
+// type let = const & var

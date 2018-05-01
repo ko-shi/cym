@@ -1,80 +1,89 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="ソース ファイル">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="ヘッダー ファイル">
+    <Filter Include="headers">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="リソース ファイル">
+    <Filter Include="headers\lang">
+      <UniqueIdentifier>{4e555216-75a7-4964-bc19-ab693157527f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sources">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="resources">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="headers\utils">
+      <UniqueIdentifier>{9fddac0a-6f94-4a00-b3bd-aaf5a9c308f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="headers\parser">
+      <UniqueIdentifier>{b660a1c5-47d9-4d28-9401-765dc1057cec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="headers\utils\string">
+      <UniqueIdentifier>{d28e266b-454e-4558-91b8-7e81fded2d07}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Cym.hpp">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="include\cym\CymBase.hpp">
+      <Filter>headers</Filter>
     </ClInclude>
-    <ClInclude Include="CymDoubleKeyMap.hpp">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="include\cym\utils\CymDoubleKeyMap.hpp">
+      <Filter>headers\utils</Filter>
     </ClInclude>
-    <ClInclude Include="CymStack.hpp">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="include\cym\utils\CymHandStack.hpp">
+      <Filter>headers\utils</Filter>
     </ClInclude>
-    <ClInclude Include="CymVector.hpp">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="include\cym\utils\CymNumConverter.hpp">
+      <Filter>headers\utils</Filter>
     </ClInclude>
-    <ClInclude Include="CymDataTypes.hpp">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="include\cym\utils\CymStack.hpp">
+      <Filter>headers\utils</Filter>
     </ClInclude>
-    <ClInclude Include="CymShiftJisString.hpp">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="include\cym\utils\CymTCPair.hpp">
+      <Filter>headers\utils</Filter>
     </ClInclude>
-    <ClInclude Include="CymStringConverter.hpp">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="include\cym\utils\CymTree.hpp">
+      <Filter>headers\utils</Filter>
     </ClInclude>
-    <ClInclude Include="CymU8String.hpp">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="include\cym\utils\CymVector.hpp">
+      <Filter>headers\utils</Filter>
     </ClInclude>
-    <ClInclude Include="CymMultiByteChar.hpp">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="include\cym\utils\string\CymMultiByteChar.hpp">
+      <Filter>headers\utils\string</Filter>
     </ClInclude>
-    <ClInclude Include="CymStringView.hpp">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="include\cym\utils\string\CymShiftJisString.hpp">
+      <Filter>headers\utils\string</Filter>
     </ClInclude>
-    <ClInclude Include="CymStringOperation.hpp">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="include\cym\utils\string\CymStringConverter.hpp">
+      <Filter>headers\utils\string</Filter>
     </ClInclude>
-    <ClInclude Include="CymTCPair.hpp">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="include\cym\utils\string\CymU8String.hpp">
+      <Filter>headers\utils\string</Filter>
     </ClInclude>
-    <ClInclude Include="CymHandStack.hpp">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="include\cym\lang\CymIntermediateCodeMaker.hpp">
+      <Filter>headers\lang</Filter>
     </ClInclude>
-    <ClInclude Include="CymNumConverter.hpp">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="include\cym\parser\CymStringOperation.hpp">
+      <Filter>headers\parser</Filter>
     </ClInclude>
-    <ClInclude Include="CymIntermediateCodeMaker.hpp">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="include\cym\Cym.hpp">
+      <Filter>headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="test.cym">
-      <Filter>ヘッダー ファイル</Filter>
-    </None>
-    <None Include="CymTree.hpp">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>headers</Filter>
     </None>
     <None Include="infix-operators.cymi">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>headers</Filter>
     </None>
   </ItemGroup>
 </Project>
