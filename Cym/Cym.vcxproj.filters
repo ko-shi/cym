@@ -68,14 +68,14 @@
     <ClInclude Include="include\cym\utils\string\CymU8String.hpp">
       <Filter>headers\utils\string</Filter>
     </ClInclude>
-    <ClInclude Include="include\cym\lang\CymIntermediateCodeMaker.hpp">
-      <Filter>headers\lang</Filter>
-    </ClInclude>
     <ClInclude Include="include\cym\parser\CymStringOperation.hpp">
       <Filter>headers\parser</Filter>
     </ClInclude>
     <ClInclude Include="include\cym\Cym.hpp">
       <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cym\lang\CymIntermediateCodeGenerator.hpp">
+      <Filter>headers\lang</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

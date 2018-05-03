@@ -1,70 +1,53 @@
 [
     {
         "Kind" : "DefineFunc",
-        "Name" : "init@",
+        "Name" : "init",
         "Order" : [
             {
-                "Kind" : "DefineFunc",
-                
-                "Name" : "sum@@",
-                "Order" : [
-                    {
-                        "Kind" : "DefineArg",
-                        "Name" : [
-                            "left",
-                            "right"
-                        ]
-                    },
-                    {
-                        "Kind" : "ReturnFunc",
-                        "Name" : "@+@",
-                        "Args" : [
-                            {
-                                "Kind" : "Param",
-                                "Name" : "left"
-                            },
-                            {
-                                "Kind" : "Param",
-                                "Name" : "right"
-                            }
-                        ]
-                    }
-                ]                    
-                
-            },
-            {
-                "Kind" : "DefineParam",
-                "Name" : "i",
-                "Cons" : [
-                    {
-                        "Kind" : "Param",
-                        "Name" : "i"
-                    },
-                    0
-                ]
-                
-            },
-            {
-                "Kind" : "Call",
-                "Name" : "@:=@",
-                "Args" : [
-                    {
-                        "Kind" : "Param",
-                        "Name" : "i"
-                    },
-                    {
-                        "Kind" : "Func",
-                        "Name" : "sum@@",
-                        "Args" : [
-                            {
-                                "Kind" : "Param",
-                                "Name" : "i"
-                            },
-                            2
-                        ]
-                    }
-                ]
+                "Kind" : "DefineClass",
+                "Name" : "Pos",
+                "Member" : [
+                    "x",
+                    "y"
+                ],
+                "Restriction" : [
+                    "var",
+                    "var"
+                ],
+                "Method" : {
+                    "Cons" : [
+                        {
+                            "ArgNames" : [
+                                "x",
+                                "y"
+                            ],
+                            "Restriction" : [
+                                "var",
+                                "var"
+                            ]
+                        },
+                        {
+                            "ArgNames" : [
+                                
+                            ],
+                            "Restriction" : [
+
+                            ],
+                            "Order" : [
+                                {
+                                    "Kind" : "CallCons",
+                                    "Args" : [
+                                        0,
+                                        0
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
             }
+
         ]
     }
+
 ]

@@ -73,7 +73,6 @@ namespace cym {
 			: StrView(str.data(), str.size() + expand_num);
 	}
 	StrView rangeOf(const StrView &begin, const StrView &end) {
-		const auto a = StrView(begin.data(), (end.data() + end.size()) - begin.data());
 		return StrView(begin.data(), (end.data() + end.size()) - begin.data());
 	}
 	bool isSub(const StrView &str, const StrView &sub) {
@@ -88,7 +87,7 @@ namespace cym {
 			u'(' ,u')',u'[' ,u']',u'{',u'}' ,u'"',u'<',u'>',
 			u'+' ,u'-' ,u'*' ,u'/' ,
 			u'.',
-			u',' ,u' '
+			u',' ,u' ',u';'
 		};
 		const auto takeWhileName = [&](StrView word) {return takeWhile(word, [&](auto c) {return std::none_of(specials.begin(), specials.end(), [&](auto s) {return s == c; }); }); };
 		const auto word = can_delete_front_space ? 
@@ -245,29 +244,6 @@ namespace cym {
 
 		}
 		return i;
-	}
-
-	int gl_num_if_it_means_number_in_take_word = 0;
-	/*
-	The first of signs must be '(' ,and
-	the second of signs must be ')'.
-	*/
-
-	/*
-	The first of signs must be '(' ,and
-	the second of signs must be ')'.
-	PriorityFunc is bool(Str,Str),and have to return true in case of that left side has high priority.
-	In case of right side has high priority, please return false.
-	*/
-
-
-	template<class Str,class T>
-	Str showRPN(const T &rpn) {
-		Str str;
-		for (const auto &i : rpn) {
-			str += Str(TokenClass_table[static_cast<Size>(i.first)]) + Str(u",") + Str(i.second) + Str(u"\n");
-		}
-		return str;
 	}
 }
 #endif

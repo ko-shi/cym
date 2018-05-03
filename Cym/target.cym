@@ -1,31 +1,7 @@
 cls Pos
     (var x, var y)
-    // コンストラクタ兼メンバ変数定義(フィールドコンストラクタ)
-    // ここでの引数定義はクラス定義スコープ
-    // 一番上に定義された()で囲まれた式はフィールドコンストラクタとなる
-    // 定義に何も書かれなかった場合引数をそのままメンバ変数にする
-    // コンストラクタはretできない
-    // 呼び出しは他のメンバ関数同様()で行う
+
     ()
         (0,0)
 
-    (var x1,var y1,var x2,var y2)
-        (x2 - x1,y2 - y1)
-
-ifx (Pos p1)+(Pos p2)
-    ret Pos(p1.x + p2.x,p1.y + p2.y)
-
-
-let p1 = Pos(114514,810)
-let p2 = Pos()
-let p3 = p1 + Pos(364,364)
-// =演算子は右辺の型のサイズを確保した領域にコンストラクタを適用させる
-
-// 型制約式
-
-type T = req.x & req.y & pro(self + self)
-
-let is_vec<T> = true
-let is_vec<var> = false
-
-// type let = const & var
+var a = Pos(0,0)

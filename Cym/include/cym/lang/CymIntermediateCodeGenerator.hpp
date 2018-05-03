@@ -1,5 +1,5 @@
-#ifndef CYM_INTERMEDIATE_CODE_MAKER_HPP
-#define CYM_INTERMEDIATE_CODE_MAKER_HPP
+#ifndef CYM_INTERMEDIATE_CODE_GENERATOR_HPP
+#define CYM_INTERMEDIATE_CODE_GENERATOR_HPP
 
 #include<deque>
 
@@ -19,30 +19,36 @@ namespace cym {
 			DEFINING_CLASS,
 			DEFINING_METHOD
 		};
+		struct ScopeInfo {
+			Tree* tree;
+			ScopeKind kind;
+			Set<StrView> restrictions;
+			ScopeInfo(Tree *t, ScopeKind k, Set<StrView> && r = Set<StrView>{}) : tree(t), kind(k), restrictions(std::forward<Set<StrView>>(r)) {
+
+			}
+		};
 
 		Tree icode_;
 		Vector<Str> code_;
-		Vector<Pair<Tree*,ScopeKind>> scope_;
+		Vector<ScopeInfo> scope_;
 		Vector<Str> reserved_words_;
 		Vector<StrView> infixes_;
 		Map<StrView, Size> priority_;
 		std::deque<Str> infixes_buffer_;
 		const StrView single_indent_ = StrView(u"    ");
-		Str multi_line_buffer;
 	public:
-		ICode() : icode_(Tree::ObjectType{}), code_{},reserved_words_ { u"var", u"func", u"ret", u"cls" }
+		ICode() : icode_(Tree::ObjectType{}), code_{},reserved_words_ { u"func", u"ret", u"cls" }
 			, infixes_{ u"+",u"-",u"*",u"/" }, priority_{ { u"+",1 },{ u"-",1 },{ u"*",2 },{ u"/",2 } } {
 			
 			icode_.addWhenObject(u"DefinedFunc", Tree(Tree::ObjectType{}));
 			icode_.addWhenObject(u"DefinedClass", Tree(Tree::ObjectType{}));
 			icode_.addWhenObject(u"Order", Tree(Tree::ArrayType{}));
 
-			
-			scope_.pushBack(makePair(
+			scope_.emplace_back(
 				&icode_,
-				DEFINING_FUNC
-				));
-			//scope_.pushBack();
+				DEFINING_FUNC,
+				Set<StrView>{u"var", u"let"}
+			);
 		}
 		void addInfix(Str &&infix_name) {
 			infixes_buffer_.emplace_back(std::forward<Str>(infix_name));
@@ -174,7 +180,7 @@ namespace cym {
 				code_.emplace_back(code);
 			}
 		}
-		void compileLine(StrView code) {
+		void compileLine(StrView code,Size line) {
 			Size indent_level = countStr(code, single_indent_);
 			Size cur_scope_level = scope_.size() - 1;
 			if (cur_scope_level < indent_level) {
@@ -195,11 +201,21 @@ namespace cym {
 					}
 				}
 			}
-			auto &current_scope = scope_[indent_level].first;
-			auto &scope_kind = scope_[indent_level].second;
+			auto &current_scope = scope_[indent_level].tree;
+			auto &scope_kind = scope_[indent_level].kind;
 
 			const auto token = takeToken(code,infixes_);
 			const TokenKind kind = getTokenKind(token, infixes_, reserved_words_);
+
+			/* 最初の単語が定義済みの型制約のとき */
+			for (auto itr = scope_.rbegin(); itr != scope_.rend(); itr++) {
+				const auto r = itr->restrictions;
+				if (r.find(token) != r.end()) {
+					caseDefineParam(code, token, current_scope,token);
+					break;
+				}
+			}
+
 			switch (kind) {
 			case TokenKind::EXPRESSION:
 				/* Constructor */
@@ -207,50 +223,73 @@ namespace cym {
 					break;
 				}
 				if (scope_kind == ScopeKind::WAITING_CONS_DEFINING) {
-					caseDefineInitCons(code, token, current_scope, scope_kind);
+					caseDefineInitCons(code, token, current_scope, scope_kind,line);
 				}
 				else if (scope_kind == ScopeKind::DEFINING_CLASS) {
-					current_scope->get<Tree::ObjectType>()[u"Cons"];
+					Tree arg_restrictions(Tree::ArrayType{});
+					Tree arg_names(Tree::ArrayType{});
+					for (const auto arg : listArgs(token, infixes_)) {
+						const auto restriction = takeToken(arg,infixes_);
+						arg_restrictions.addWhenArray(Tree(Str(restriction)));
+
+						const auto name = takeNextToken(code, restriction, infixes_);
+						arg_names.addWhenArray(Tree(Str(name)));
+					}
+					Tree define_cons(Tree::ObjectType{});
+					define_cons.addWhenObject(u"Restriction", std::move(arg_restrictions));
+					define_cons.addWhenObject(u"ArgNames", std::move(arg_names));
+					define_cons.addWhenObject(u"Order", Tree(Tree::ArrayType{}));
+					current_scope->get<Tree::ObjectType>()[u"Cons"]->addWhenArray(std::move(define_cons));
+					
+					scope_.emplace_back(
+						current_scope->get<Tree::ObjectType>()[u"Cons"]->get<Tree::ArrayType>().back().get()
+						, DEFINING_METHOD
+					);
 				}
 
 				break;
 			case TokenKind::RESERVEDWORD:
-				if (token == u"var") {
-					const auto name = takeNextToken(code, token,infixes_);
-					const auto equal = takeNextToken(code, name,infixes_);
-					if (equal == u"=") {
-						const auto init_expr = getRemainedStr(code, equal);
-
-						Tree arg(Tree::ArrayType{});
-						arg.addWhenArray(getParamTree(Str(name)));
-						arg.addWhenArray(getExprTree(init_expr));
-						Tree define_param(Tree::ObjectType{});
-						define_param.addWhenObject(u"Kind", Tree(Str(u"DefineParam")));
-						define_param.addWhenObject(u"Name", Tree(Str(name)));
-						define_param.addWhenObject(u"Cons", std::move(arg));
-						current_scope->get<Tree::ObjectType>()[u"Order"]->addWhenArray(std::move(define_param));
-					}
-					else {
-
-					}
-
-				}
-				else if (token == u"func") {
-					caseDefineFunc(code, token, current_scope);
+				if (token == u"func") {
+					caseDefineFunc(code, token, current_scope,line);
 				}
 				else if (token == u"ret") {
 					caseReturn(code, token, current_scope);
 				}
 				else if (token == u"cls") {
-					caseDefineClass(code, token, current_scope);
+					caseDefineClass(code, token, current_scope,line);
 				}
 				break;
 			default:
 			{
+				if (scope_kind == ScopeKind::DEFINING_CLASS) {
+					//クラス定義での文
+					//コンパイルエラー
+					return;
+				}
 				Tree tree(getExprTree(code));
 				tree.get<Tree::ObjectType>()[u"Kind"]->get<Str>() = u"Call";
-				current_scope->addWhenArray(std::move(tree));
+				current_scope->get<Tree::ObjectType>()[u"Order"]->addWhenArray(std::move(tree));
 			}
+			}
+		}
+		void caseDefineParam(StrView code, StrView token, Tree * &current_scope, StrView restriction) {
+			const auto name = takeNextToken(code, token, infixes_);
+			const auto equal = takeNextToken(code, name, infixes_);
+			if (equal == u"=") {
+				const auto init_expr = getRemainedStr(code, equal);
+
+				Tree arg(Tree::ArrayType{});
+				arg.addWhenArray(getParamTree(Str(name)));
+				arg.addWhenArray(getExprTree(init_expr));
+				Tree define_param(Tree::ObjectType{});
+				define_param.addWhenObject(u"Kind", Tree(Str(u"DefineParam")));
+				define_param.addWhenObject(u"Name", Tree(Str(name)));
+				define_param.addWhenObject(u"Cons", std::move(arg));
+				define_param.addWhenObject(u"Restriction", Tree(Str(restriction)));
+				current_scope->get<Tree::ObjectType>()[u"Order"]->addWhenArray(std::move(define_param));
+			}
+			else {
+
 			}
 		}
 		void caseReturn(StrView code,StrView token,Tree * &current_scope) {
@@ -259,7 +298,7 @@ namespace cym {
 			tree.get<Tree::ObjectType>()[u"Kind"]->get<Str>() = u"ReturnFunc";
 			current_scope->get<Tree::ObjectType>()[u"Order"]->addWhenArray(std::move(tree));
 		}
-		void caseDefineFunc(StrView code,StrView token,Tree * &current_scope) {
+		void caseDefineFunc(StrView code,StrView token,Tree * &current_scope,Size line) {
 			const auto func_decl = takeNextToken(code, token, infixes_);
 			const Str func_name = toFuncName(func_decl, infixes_);
 			if (getTokenKind(func_decl, infixes_, reserved_words_, &func_name) == TokenKind::FUNC) {
@@ -300,13 +339,14 @@ namespace cym {
 					pos_of_the_name->second->addWhenArray(std::move(define_func));
 				}
 
-				scope_.pushBack(makePair(
+				scope_.emplace_back(
 					place_to_insert->get<Tree::ObjectType>()[func_name]->get<Tree::ArrayType>().back().get()
 					, DEFINING_FUNC
-				));
+				);
+				scanClsDefinition(line + 1);
 			}
 		}
-		void caseDefineClass(StrView code,StrView token,Tree * &current_scope) {
+		void caseDefineClass(StrView code, StrView token, Tree * &current_scope,Size line) {
 			const auto name = takeNextToken(code, token, infixes_);
 			Tree define_class(Tree::ObjectType{});
 			define_class.addWhenObject(u"Kind", Tree(Str(u"DefineClass")));
@@ -319,18 +359,20 @@ namespace cym {
 			auto &place_to_insert = current_scope->get<Tree::ObjectType>()[u"DefinedClass"];
 			auto pos_of_the_name = place_to_insert->get<Tree::ObjectType>().find(cls_name);
 			if (pos_of_the_name == place_to_insert->get<Tree::ObjectType>().end()) {
-				place_to_insert->addWhenObject(cls_name, Tree(Tree::ArrayType{}));
-				place_to_insert->get<Tree::ObjectType>()[cls_name]->addWhenArray(std::move(define_class));
+				place_to_insert->addWhenObject(cls_name, std::move(define_class));
 			}
 			else {
-				pos_of_the_name->second->addWhenArray(std::move(define_class));
+				// 同名クラスの複数定義
+				// コンパイルエラー
+				return;
 			}
-			scope_.pushBack(makePair(
-				current_scope->get<Tree::ObjectType>()[u"DefinedClass"]->get<Tree::ObjectType>()[Str(name)]->get<Tree::ArrayType>().back().get(),
+			scope_.emplace_back(
+				current_scope->get<Tree::ObjectType>()[u"DefinedClass"]->get<Tree::ObjectType>()[Str(name)].get(),
 				WAITING_CONS_DEFINING
-			));
+			);
+			scanClsDefinition(line + 1);
 		}
-		void caseDefineInitCons(StrView code,StrView token,Tree * &current_scope,ScopeKind &scope_kind) {
+		void caseDefineInitCons(StrView code,StrView token,Tree * &current_scope,ScopeKind &scope_kind,Size line) {
 			Tree restrictions(Tree::ArrayType{});
 			Tree arg_names(Tree::ArrayType{});
 			for (const auto &arg : listArgs(token, infixes_)) {
@@ -353,14 +395,47 @@ namespace cym {
 
 			current_scope = current_scope->get<Tree::ObjectType>()[u"Method"].get();
 			scope_kind = ScopeKind::DEFINING_CLASS;
-			scope_.pushBack(makePair(
+			scope_.emplace_back(
 				current_scope->get<Tree::ObjectType>()[u"Cons"]->get<Tree::ArrayType>().back()->get<Tree::ObjectType>()[u"Order"].get()
 				, DEFINING_METHOD
-			));
+			);
+			scanClsDefinition(line + 1);
+
 		}
+		void scanClsDefinition(Size line) {
+			for (auto i = line; i < code_.size();i++) {
+				const auto str = code_[i];
+				Size indent_level = countStr(str, single_indent_);
+				Size cur_indent_level = scope_.size() - 1;
+				if (indent_level == cur_indent_level) {
+					const auto token = takeWhile(deleteSpace(str), [](Char c) {return c != u' '; });
+					if (token == u"cls") {
+						const auto name = takeNextToken(str, token, infixes_);
+						scope_.back().restrictions.emplace(name);
+					}
+				}
+				else if (indent_level < cur_indent_level) {
+					break;
+				}
+			}
+		}
+
 		void compile() {
+			// タブ文字をスペースに置き換え
+			for (auto &&s : code_) {
+				for (auto itr = s.begin(); itr != s.end();itr++) {
+					if (*itr == u'\t') {
+						s.replace(itr, itr + 1, single_indent_);
+					}
+				}
+			}
+
+			scanClsDefinition(0);
+
+			Size index = 0;
 			for (const auto &s : code_) {
-				compileLine(StrView(s));
+				compileLine(StrView(s),index);
+				index++;
 			}
 		}
 	};

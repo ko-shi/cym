@@ -1,6 +1,8 @@
 cls A
     (var a,var b)
 
+	(var a)
+
 func to(var b)
     plus(b,t)
     ret b

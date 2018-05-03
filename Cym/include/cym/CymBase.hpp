@@ -2,8 +2,10 @@
 #define CYM_BASE_HPP
 
 #include<unordered_map>
+#include<unordered_set>
 #include<string>
 #include<string_view>
+#include<tuple>
 #include<sstream>
 
 namespace cym {
@@ -12,6 +14,8 @@ namespace cym {
 	using Uint = std::uint32_t;
 	template<class T,class Y>
 	using Map = std::unordered_map<T, Y>;
+	template<class T>
+	using Set = std::unordered_set<T>;
 	using Str = std::u16string;
 	using StrView = std::u16string_view;
 	using Char = char16_t;

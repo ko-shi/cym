@@ -24,7 +24,7 @@
   <ItemGroup>
     <ClInclude Include="include\cym\Cym.hpp" />
     <ClInclude Include="include\cym\CymBase.hpp" />
-    <ClInclude Include="include\cym\lang\CymIntermediateCodeMaker.hpp" />
+    <ClInclude Include="include\cym\lang\CymIntermediateCodeGenerator.hpp" />
     <ClInclude Include="include\cym\parser\CymStringOperation.hpp" />
     <ClInclude Include="include\cym\utils\CymDoubleKeyMap.hpp" />
     <ClInclude Include="include\cym\utils\CymHandStack.hpp" />
@@ -113,7 +113,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalIncludeDirectories>C:\Users\koshi_000\Documents\Cym\Cym\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -150,6 +150,11 @@
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions</EnableEnhancedInstructionSet>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalIncludeDirectories>C:\Users\koshi_000\Documents\Cym\Cym\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ExceptionHandling>false</ExceptionHandling>
+      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
