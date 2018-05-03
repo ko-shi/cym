@@ -50,7 +50,7 @@ namespace cym {
 				&icode_,
 				DEFINING_FUNC,
 				Set<StrView>{u"var", u"let"},
-				Vector<StrView>{ u"+", u"-", u"*", u"/" }
+				Vector<StrView>{ u"+", u"-", u"*", u"/",u"." }
 			);
 		}
 		Vector<Pair<TokenKind,StrView>> convertToPolishNotation(const StrView &expr,const Vector<StrView> &infixes) {
@@ -250,7 +250,7 @@ namespace cym {
 				break;
 			case TokenKind::RESERVEDWORD:
 				if (token == u"func") {
-					caseDefineFunc(code, token, current_scope,line,infixes);
+					caseDefineFunc(code, token, current_scope,line,infixes,ScopeKind::DEFINING_FUNC);
 				}
 				else if (token == u"ret") {
 					caseReturn(code, token, current_scope,infixes);
@@ -259,6 +259,12 @@ namespace cym {
 					caseDefineClass(code, token, current_scope,line,infixes);
 				}
 				break;
+			case TokenKind::INFIX:
+				if (token == u".") {
+					if (scope_kind == ScopeKind::DEFINING_CLASS) {
+						caseDefineFunc(code, token, current_scope, line, infixes, ScopeKind::DEFINING_METHOD);
+					}
+				}
 			default:
 			{
 				if (scope_kind == ScopeKind::DEFINING_CLASS) {
@@ -299,7 +305,7 @@ namespace cym {
 			tree.get<Tree::ObjectType>()[u"Kind"]->get<Str>() = u"ReturnFunc";
 			current_scope->addWhenArray(std::move(tree));
 		}
-		void caseDefineFunc(StrView code,StrView token,Tree * &current_scope,Size line,const Vector<StrView> &infixes) {
+		void caseDefineFunc(StrView code, StrView token, Tree * &current_scope, Size line, const Vector<StrView> &infixes,ScopeKind func_or_method) {
 			const auto func_decl = takeNextToken(code, token, infixes);
 			const Str func_name = toFuncName(func_decl, infixes);
 			if (getTokenKind(func_decl, infixes, reserved_words_, &func_name) == TokenKind::FUNC) {
@@ -321,16 +327,16 @@ namespace cym {
 
 
 				Tree define_func(Tree::ObjectType{});
-				define_func.addWhenObject(u"Kind", Tree(Str(u"DefineFunc")));
 				define_func.addWhenObject(u"ArgNames", std::move(arg_names));
 				define_func.addWhenObject(u"Restriction", std::move(arg_restrictions));
 				define_func.addWhenObject(u"Order", std::move(order));
 				define_func.addWhenObject(u"DefinedClass", Tree(Tree::ObjectType{}));
 				define_func.addWhenObject(u"DefinedFunc", Tree(Tree::ObjectType{}));
 
-				current_scope->get<Tree::ObjectType>()[u"DefinedFunc"];
 
-				auto &place_to_insert = current_scope->get<Tree::ObjectType>()[u"DefinedFunc"];
+				auto place_to_insert = func_or_method == ScopeKind::DEFINING_FUNC ?
+					current_scope->get<Tree::ObjectType>()[u"DefinedFunc"].get()
+					: current_scope;
 				auto pos_of_the_name = place_to_insert->get<Tree::ObjectType>().find(func_name);
 				if (pos_of_the_name == place_to_insert->get<Tree::ObjectType>().end()) {
 					place_to_insert->addWhenObject(func_name, Tree(Tree::ArrayType{}));
@@ -342,10 +348,10 @@ namespace cym {
 
 				scope_.emplace_back(
 					place_to_insert->get<Tree::ObjectType>()[func_name]->get<Tree::ArrayType>().back()->get<Tree::ObjectType>()[u"Order"].get()
-					, DEFINING_FUNC
-					,Set<StrView>{}
-					,infixes
-				);
+					, func_or_method
+					, Set<StrView>{}
+					, infixes
+					);
 				scanClsDefinition(line + 1);
 			}
 		}

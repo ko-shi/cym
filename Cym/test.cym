@@ -1,12 +1,4 @@
-cls A
-    (var a,var b)
-		do()something
-
+cls MyClass
 	(var a)
-		do()anything
 
-func to(var b)
-    plus(b,t)
-    ret b
-
-var i = 0
+	.aiueo()

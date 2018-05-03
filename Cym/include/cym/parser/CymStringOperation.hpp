@@ -109,6 +109,7 @@ namespace cym {
 		case u'-':
 		case u'*':
 		case u'/':
+		case u'.':
 			if (name.empty()) {
 				return sign_part.substr(0, 1);
 			}
