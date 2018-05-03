@@ -240,7 +240,8 @@ namespace cym {
 
 	Size countStr(const StrView &str, const StrView &contrast) {
 		Size i = 0;
-		for (auto token = str; token.substr(0, contrast.size()) == contrast; token = getRemainedStr(str, token), i++) {
+		for (auto token = str; token.substr(0, contrast.size()) == contrast;
+			token = getRemainedStr(str, token.substr(0, contrast.size())), i++) {
 
 		}
 		return i;

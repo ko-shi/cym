@@ -23,7 +23,10 @@ namespace cym {
 			Tree* tree;
 			ScopeKind kind;
 			Set<StrView> restrictions;
-			ScopeInfo(Tree *t, ScopeKind k, Set<StrView> && r = Set<StrView>{}) : tree(t), kind(k), restrictions(std::forward<Set<StrView>>(r)) {
+			Vector<StrView> infixes;
+			template<class T,class Y>
+			ScopeInfo(Tree *t, ScopeKind k, T && r, Y && i)
+				: tree(t), kind(k), restrictions(std::forward<T>(r)), infixes(std::forward<Y>(i)) {
 
 			}
 		};
@@ -32,13 +35,12 @@ namespace cym {
 		Vector<Str> code_;
 		Vector<ScopeInfo> scope_;
 		Vector<Str> reserved_words_;
-		Vector<StrView> infixes_;
 		Map<StrView, Size> priority_;
 		std::deque<Str> infixes_buffer_;
 		const StrView single_indent_ = StrView(u"    ");
 	public:
 		ICode() : icode_(Tree::ObjectType{}), code_{},reserved_words_ { u"func", u"ret", u"cls" }
-			, infixes_{ u"+",u"-",u"*",u"/" }, priority_{ { u"+",1 },{ u"-",1 },{ u"*",2 },{ u"/",2 } } {
+			, priority_{ { u"+",1 },{ u"-",1 },{ u"*",2 },{ u"/",2 } } {
 			
 			icode_.addWhenObject(u"DefinedFunc", Tree(Tree::ObjectType{}));
 			icode_.addWhenObject(u"DefinedClass", Tree(Tree::ObjectType{}));
@@ -47,18 +49,15 @@ namespace cym {
 			scope_.emplace_back(
 				&icode_,
 				DEFINING_FUNC,
-				Set<StrView>{u"var", u"let"}
+				Set<StrView>{u"var", u"let"},
+				Vector<StrView>{ u"+", u"-", u"*", u"/" }
 			);
 		}
-		void addInfix(Str &&infix_name) {
-			infixes_buffer_.emplace_back(std::forward<Str>(infix_name));
-			infixes_.emplaceBack(StrView(infixes_buffer_.back()));
-		}
-		Vector<Pair<TokenKind,StrView>> convertToPolishNotation(const StrView &expr) {
+		Vector<Pair<TokenKind,StrView>> convertToPolishNotation(const StrView &expr,const Vector<StrView> &infixes) {
 			Stack<StrView> stack;
 			Vector<Pair<TokenKind, StrView>> call_list;
-			for (auto token = takeToken(expr,infixes_); !token.empty(); token = takeNextToken(expr, token,infixes_)) {
-				const TokenKind kind = getTokenKind(token,infixes_, reserved_words_);
+			for (auto token = takeToken(expr,infixes); !token.empty(); token = takeNextToken(expr, token,infixes)) {
+				const TokenKind kind = getTokenKind(token,infixes, reserved_words_);
 				switch (kind) {
 				case TokenKind::DECIMAL:
 				case TokenKind::NUMBER:
@@ -99,13 +98,13 @@ namespace cym {
 			for (Size i = 0; i < call_list.size(); i++) {
 				if (call_list[i].first == TokenKind::FUNC) {
 					Size index = 1;
-					for (const auto arg : listArgs(call_list[i].second,infixes_)) {
-						call_list.insert(i + index,convertToPolishNotation(arg));
+					for (const auto arg : listArgs(call_list[i].second,infixes)) {
+						call_list.insert(i + index,convertToPolishNotation(arg,infixes));
 						index++;
 					}
 				}
 				else if (call_list[i].first == TokenKind::EXPRESSION) {
-					call_list.insert(i, convertToPolishNotation(bracketContent(call_list[i].second)));
+					call_list.insert(i, convertToPolishNotation(bracketContent(call_list[i].second),infixes));
 				}
 			}
 			return call_list;
@@ -116,7 +115,7 @@ namespace cym {
 			tree.addWhenObject(u"Name", Tree(name));
 			return tree;
 		}
-		Tree convertPNToTree(Vector<Pair<TokenKind, StrView>>::iterator &itr, Size take_num) const{
+		Tree convertPNToTree(Vector<Pair<TokenKind, StrView>>::iterator &itr, Size take_num,const Vector<StrView> &infixes) const{
 			Tree tree(Tree::ArrayType{});
 			for (Size i = 0; i < take_num;i++,itr++) {
 				const auto name = itr->second;
@@ -138,11 +137,11 @@ namespace cym {
 				case TokenKind::INFIX:{
 					Tree func_obj(Tree::ObjectType{});
 					func_obj.addWhenObject(u"Kind", Tree(Str(u"Func")));
-					const auto func_name = toFuncName(name, infixes_);
+					const auto func_name = toFuncName(name, infixes);
 					func_obj.addWhenObject(u"Name", Tree(func_name));
 					const auto arg_num = std::count(func_name.begin(), func_name.end(), u'@');
 					auto itr_temp = itr + 1;
-					func_obj.addWhenObject(u"Args", convertPNToTree(itr_temp, arg_num));
+					func_obj.addWhenObject(u"Args", convertPNToTree(itr_temp, arg_num,infixes));
 					itr = itr_temp - 1;
 					tree.addWhenArray(std::move(func_obj));
 					break;
@@ -151,19 +150,17 @@ namespace cym {
 			}
 			return tree;
 		}
-		Tree getExprTree(const StrView &expr) {
-			auto pn = convertToPolishNotation(expr);
+		Tree getExprTree(const StrView &expr,const Vector<StrView> &infixes) {
+			auto pn = convertToPolishNotation(expr,infixes);
 			auto pn_itr = pn.begin();
-			auto expr_tree_arr = convertPNToTree(pn_itr, 1);
+			auto expr_tree_arr = convertPNToTree(pn_itr, 1,infixes);
 			return Tree(std::move(*expr_tree_arr.get<Tree::ArrayType>()[0]));
 		}
 		bool isFollowing(StrView str) const{
-			const auto token = takeWhile(str, [](Char c) {return c != u' '; });
-			if (std::find(infixes_.begin(), infixes_.end(), token) != infixes_.end()) {
-				return true;
-			}
-			if (!token.empty() && token[0] == u',') {
-				return true;
+			const auto space_range = takeWhile(str, [](Char c) {return c == u' ' || c == u'\t'; });
+			const auto sen_beg = getRemainedStr(str, space_range);
+			if (!sen_beg.empty() && sen_beg[0] == u'/') {
+				true;
 			}
 			return false;
 		}
@@ -203,15 +200,16 @@ namespace cym {
 			}
 			auto &current_scope = scope_[indent_level].tree;
 			auto &scope_kind = scope_[indent_level].kind;
+			const auto &infixes = scope_[indent_level].infixes;
 
-			const auto token = takeToken(code,infixes_);
-			const TokenKind kind = getTokenKind(token, infixes_, reserved_words_);
+			const auto token = takeToken(code,infixes);
+			const TokenKind kind = getTokenKind(token, infixes, reserved_words_);
 
 			/* 最初の単語が定義済みの型制約のとき */
 			for (auto itr = scope_.rbegin(); itr != scope_.rend(); itr++) {
 				const auto r = itr->restrictions;
 				if (r.find(token) != r.end()) {
-					caseDefineParam(code, token, current_scope,token);
+					caseDefineParam(code, token, current_scope,token,infixes);
 					break;
 				}
 			}
@@ -223,16 +221,16 @@ namespace cym {
 					break;
 				}
 				if (scope_kind == ScopeKind::WAITING_CONS_DEFINING) {
-					caseDefineInitCons(code, token, current_scope, scope_kind,line);
+					caseDefineInitCons(code, token, current_scope, scope_kind,line,infixes);
 				}
 				else if (scope_kind == ScopeKind::DEFINING_CLASS) {
 					Tree arg_restrictions(Tree::ArrayType{});
 					Tree arg_names(Tree::ArrayType{});
-					for (const auto arg : listArgs(token, infixes_)) {
-						const auto restriction = takeToken(arg,infixes_);
+					for (const auto arg : listArgs(token, infixes)) {
+						const auto restriction = takeToken(arg,infixes);
 						arg_restrictions.addWhenArray(Tree(Str(restriction)));
 
-						const auto name = takeNextToken(code, restriction, infixes_);
+						const auto name = takeNextToken(code, restriction, infixes);
 						arg_names.addWhenArray(Tree(Str(name)));
 					}
 					Tree define_cons(Tree::ObjectType{});
@@ -242,21 +240,23 @@ namespace cym {
 					current_scope->get<Tree::ObjectType>()[u"Cons"]->addWhenArray(std::move(define_cons));
 					
 					scope_.emplace_back(
-						current_scope->get<Tree::ObjectType>()[u"Cons"]->get<Tree::ArrayType>().back().get()
+						current_scope->get<Tree::ObjectType>()[u"Cons"]->get<Tree::ArrayType>().back()->get<Tree::ObjectType>()[u"Order"].get()
 						, DEFINING_METHOD
+						, Set<StrView>{}
+						, Vector<StrView>(infixes)
 					);
 				}
 
 				break;
 			case TokenKind::RESERVEDWORD:
 				if (token == u"func") {
-					caseDefineFunc(code, token, current_scope,line);
+					caseDefineFunc(code, token, current_scope,line,infixes);
 				}
 				else if (token == u"ret") {
-					caseReturn(code, token, current_scope);
+					caseReturn(code, token, current_scope,infixes);
 				}
 				else if (token == u"cls") {
-					caseDefineClass(code, token, current_scope,line);
+					caseDefineClass(code, token, current_scope,line,infixes);
 				}
 				break;
 			default:
@@ -266,21 +266,22 @@ namespace cym {
 					//コンパイルエラー
 					return;
 				}
-				Tree tree(getExprTree(code));
+				Tree tree(getExprTree(code,infixes));
 				tree.get<Tree::ObjectType>()[u"Kind"]->get<Str>() = u"Call";
-				current_scope->get<Tree::ObjectType>()[u"Order"]->addWhenArray(std::move(tree));
+				current_scope->addWhenArray(std::move(tree));
+				scope_.size();
 			}
 			}
 		}
-		void caseDefineParam(StrView code, StrView token, Tree * &current_scope, StrView restriction) {
-			const auto name = takeNextToken(code, token, infixes_);
-			const auto equal = takeNextToken(code, name, infixes_);
+		void caseDefineParam(StrView code, StrView token, Tree * &current_scope, StrView restriction,const Vector<StrView> &infixes) {
+			const auto name = takeNextToken(code, token, infixes);
+			const auto equal = takeNextToken(code, name, infixes);
 			if (equal == u"=") {
 				const auto init_expr = getRemainedStr(code, equal);
 
 				Tree arg(Tree::ArrayType{});
 				arg.addWhenArray(getParamTree(Str(name)));
-				arg.addWhenArray(getExprTree(init_expr));
+				arg.addWhenArray(getExprTree(init_expr,infixes));
 				Tree define_param(Tree::ObjectType{});
 				define_param.addWhenObject(u"Kind", Tree(Str(u"DefineParam")));
 				define_param.addWhenObject(u"Name", Tree(Str(name)));
@@ -292,23 +293,23 @@ namespace cym {
 
 			}
 		}
-		void caseReturn(StrView code,StrView token,Tree * &current_scope) {
+		void caseReturn(StrView code,StrView token,Tree * &current_scope,const Vector<StrView> &infixes) {
 			const auto ret_expr = getRemainedStr(code, token);
-			Tree tree(getExprTree(ret_expr));
+			Tree tree(getExprTree(ret_expr,infixes));
 			tree.get<Tree::ObjectType>()[u"Kind"]->get<Str>() = u"ReturnFunc";
-			current_scope->get<Tree::ObjectType>()[u"Order"]->addWhenArray(std::move(tree));
+			current_scope->addWhenArray(std::move(tree));
 		}
-		void caseDefineFunc(StrView code,StrView token,Tree * &current_scope,Size line) {
-			const auto func_decl = takeNextToken(code, token, infixes_);
-			const Str func_name = toFuncName(func_decl, infixes_);
-			if (getTokenKind(func_decl, infixes_, reserved_words_, &func_name) == TokenKind::FUNC) {
+		void caseDefineFunc(StrView code,StrView token,Tree * &current_scope,Size line,const Vector<StrView> &infixes) {
+			const auto func_decl = takeNextToken(code, token, infixes);
+			const Str func_name = toFuncName(func_decl, infixes);
+			if (getTokenKind(func_decl, infixes, reserved_words_, &func_name) == TokenKind::FUNC) {
 				Tree arg_names(Tree::ArrayType{});
 				Tree arg_restrictions(Tree::ArrayType{});
-				for (const auto &arg : listArgs(func_decl, infixes_)) {
-					const auto type_restriction = takeToken(arg, infixes_);
+				for (const auto &arg : listArgs(func_decl, infixes)) {
+					const auto type_restriction = takeToken(arg, infixes);
 					arg_restrictions.addWhenArray(Tree(Str(type_restriction)));
 					/* TODO : type_restriction */
-					const auto name = takeNextToken(code, type_restriction, infixes_);
+					const auto name = takeNextToken(code, type_restriction, infixes);
 					arg_names.addWhenArray(Tree(Str(name)));
 				}
 				Tree define_arg(Tree::ObjectType{});
@@ -340,14 +341,16 @@ namespace cym {
 				}
 
 				scope_.emplace_back(
-					place_to_insert->get<Tree::ObjectType>()[func_name]->get<Tree::ArrayType>().back().get()
+					place_to_insert->get<Tree::ObjectType>()[func_name]->get<Tree::ArrayType>().back()->get<Tree::ObjectType>()[u"Order"].get()
 					, DEFINING_FUNC
+					,Set<StrView>{}
+					,infixes
 				);
 				scanClsDefinition(line + 1);
 			}
 		}
-		void caseDefineClass(StrView code, StrView token, Tree * &current_scope,Size line) {
-			const auto name = takeNextToken(code, token, infixes_);
+		void caseDefineClass(StrView code, StrView token, Tree * &current_scope,Size line,const Vector<StrView> &infixes) {
+			const auto name = takeNextToken(code, token, infixes);
 			Tree define_class(Tree::ObjectType{});
 			define_class.addWhenObject(u"Kind", Tree(Str(u"DefineClass")));
 			define_class.addWhenObject(u"Member", Tree(Tree::ArrayType{}));
@@ -369,18 +372,20 @@ namespace cym {
 			scope_.emplace_back(
 				current_scope->get<Tree::ObjectType>()[u"DefinedClass"]->get<Tree::ObjectType>()[Str(name)].get(),
 				WAITING_CONS_DEFINING
+				, Set<StrView>{}
+				, infixes
 			);
 			scanClsDefinition(line + 1);
 		}
-		void caseDefineInitCons(StrView code,StrView token,Tree * &current_scope,ScopeKind &scope_kind,Size line) {
+		void caseDefineInitCons(StrView code,StrView token,Tree * &current_scope,ScopeKind &scope_kind,Size line,const Vector<StrView> &infixes) {
 			Tree restrictions(Tree::ArrayType{});
 			Tree arg_names(Tree::ArrayType{});
-			for (const auto &arg : listArgs(token, infixes_)) {
-				const auto type_restriction = takeToken(arg, infixes_);
+			for (const auto &arg : listArgs(token, infixes)) {
+				const auto type_restriction = takeToken(arg, infixes);
 				current_scope->get<Tree::ObjectType>()[u"Restriction"]->addWhenArray(Tree(Str(type_restriction)));
 				restrictions.addWhenArray(Tree(Str(type_restriction)));
 
-				const auto name = takeNextToken(code, type_restriction, infixes_);
+				const auto name = takeNextToken(code, type_restriction, infixes);
 				current_scope->get<Tree::ObjectType>()[u"Member"]->addWhenArray(Tree(Str(name)));
 				arg_names.addWhenArray(Tree(Str(name)));
 			}
@@ -398,6 +403,8 @@ namespace cym {
 			scope_.emplace_back(
 				current_scope->get<Tree::ObjectType>()[u"Cons"]->get<Tree::ArrayType>().back()->get<Tree::ObjectType>()[u"Order"].get()
 				, DEFINING_METHOD
+				, Set<StrView>{}
+				, infixes
 			);
 			scanClsDefinition(line + 1);
 
@@ -410,7 +417,7 @@ namespace cym {
 				if (indent_level == cur_indent_level) {
 					const auto token = takeWhile(deleteSpace(str), [](Char c) {return c != u' '; });
 					if (token == u"cls") {
-						const auto name = takeNextToken(str, token, infixes_);
+						const auto name = takeNextToken(str, token, {});
 						scope_.back().restrictions.emplace(name);
 					}
 				}
@@ -423,9 +430,10 @@ namespace cym {
 		void compile() {
 			// タブ文字をスペースに置き換え
 			for (auto &&s : code_) {
-				for (auto itr = s.begin(); itr != s.end();itr++) {
-					if (*itr == u'\t') {
-						s.replace(itr, itr + 1, single_indent_);
+				for (Size i = 0;i < s.size();i++) {
+					if (s[i] == u'\t') {
+						s.replace(i,1,single_indent_);
+						i += single_indent_.size() - 1;
 					}
 				}
 			}

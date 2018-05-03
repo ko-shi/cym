@@ -1,7 +1,9 @@
 cls A
     (var a,var b)
+		do()something
 
 	(var a)
+		do()anything
 
 func to(var b)
     plus(b,t)

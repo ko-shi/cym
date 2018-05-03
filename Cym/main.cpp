@@ -14,11 +14,7 @@ int main() {
 	ICode icode;
 
 
-	std::fstream infix("infix-operators.cymi");
 	std::string str;
-	while (std::getline(infix, str)) {
-		icode.addInfix(toU16String(toU8String(str)));
-	}
 
 
 	std::fstream file("test.cym");
