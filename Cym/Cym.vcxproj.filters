@@ -25,6 +25,9 @@
     <Filter Include="headers\utils\string">
       <UniqueIdentifier>{d28e266b-454e-4558-91b8-7e81fded2d07}</UniqueIdentifier>
     </Filter>
+    <Filter Include="headers\vm">
+      <UniqueIdentifier>{349f6db5-a5d3-42a3-b908-a7c7e8e72a5b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -75,6 +78,15 @@
       <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="include\cym\lang\CymIntermediateCodeGenerator.hpp">
+      <Filter>headers\lang</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cym\lang\CymEmbodiedCodeGentrator.hpp">
+      <Filter>headers\lang</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cym\vm\CymVM.hpp">
+      <Filter>headers\vm</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cym\lang\CymRestriction.hpp">
       <Filter>headers\lang</Filter>
     </ClInclude>
   </ItemGroup>

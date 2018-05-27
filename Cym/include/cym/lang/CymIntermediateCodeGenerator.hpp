@@ -237,13 +237,15 @@ namespace cym {
 					define_cons.addWhenObject(u"Restriction", std::move(arg_restrictions));
 					define_cons.addWhenObject(u"ArgNames", std::move(arg_names));
 					define_cons.addWhenObject(u"Order", Tree(Tree::ArrayType{}));
+					define_cons.addWhenObject(u"DefinedFunc", Tree(Tree::ObjectType{}));
+					define_cons.addWhenObject(u"DefinedClass", Tree(Tree::ObjectType{}));
 					current_scope->get<Tree::ObjectType>()[u"Cons"]->addWhenArray(std::move(define_cons));
 					
 					scope_.emplace_back(
 						current_scope->get<Tree::ObjectType>()[u"Cons"]->get<Tree::ArrayType>().back()->get<Tree::ObjectType>()[u"Order"].get()
 						, DEFINING_METHOD
 						, Set<StrView>{}
-						, Vector<StrView>(infixes)
+						, infixes
 					);
 				}
 
@@ -262,6 +264,7 @@ namespace cym {
 			case TokenKind::INFIX:
 				if (token == u".") {
 					if (scope_kind == ScopeKind::DEFINING_CLASS) {
+						//ƒƒ“ƒoŠÖ”’è‹`
 						caseDefineFunc(code, token, current_scope, line, infixes, ScopeKind::DEFINING_METHOD);
 					}
 				}
@@ -285,13 +288,10 @@ namespace cym {
 			if (equal == u"=") {
 				const auto init_expr = getRemainedStr(code, equal);
 
-				Tree arg(Tree::ArrayType{});
-				arg.addWhenArray(getParamTree(Str(name)));
-				arg.addWhenArray(getExprTree(init_expr,infixes));
 				Tree define_param(Tree::ObjectType{});
 				define_param.addWhenObject(u"Kind", Tree(Str(u"DefineParam")));
 				define_param.addWhenObject(u"Name", Tree(Str(name)));
-				define_param.addWhenObject(u"Cons", std::move(arg));
+				define_param.addWhenObject(u"Cons", getExprTree(init_expr, infixes));
 				define_param.addWhenObject(u"Restriction", Tree(Str(restriction)));
 				current_scope->get<Tree::ObjectType>()[u"Order"]->addWhenArray(std::move(define_param));
 			}
@@ -399,6 +399,8 @@ namespace cym {
 			cons_obj.addWhenObject(u"Restriction", std::move(restrictions));
 			cons_obj.addWhenObject(u"ArgNames", std::move(arg_names));
 			cons_obj.addWhenObject(u"Order", Tree(Tree::ArrayType{}));
+			cons_obj.addWhenObject(u"DefinedFunc", Tree(Tree::ObjectType{}));
+			cons_obj.addWhenObject(u"DefinedClass", Tree(Tree::ObjectType{}));
 
 			current_scope->get<Tree::ObjectType>()[u"Method"]->addWhenObject(u"Cons", Tree(Tree::ArrayType{}));
 			current_scope->get<Tree::ObjectType>()[u"Method"]->get<Tree::ObjectType>()[u"Cons"]->addWhenArray(std::move(cons_obj));

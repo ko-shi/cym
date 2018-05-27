@@ -24,7 +24,9 @@
   <ItemGroup>
     <ClInclude Include="include\cym\Cym.hpp" />
     <ClInclude Include="include\cym\CymBase.hpp" />
+    <ClInclude Include="include\cym\lang\CymEmbodiedCodeGentrator.hpp" />
     <ClInclude Include="include\cym\lang\CymIntermediateCodeGenerator.hpp" />
+    <ClInclude Include="include\cym\lang\CymRestriction.hpp" />
     <ClInclude Include="include\cym\parser\CymStringOperation.hpp" />
     <ClInclude Include="include\cym\utils\CymDoubleKeyMap.hpp" />
     <ClInclude Include="include\cym\utils\CymHandStack.hpp" />
@@ -37,6 +39,7 @@
     <ClInclude Include="include\cym\utils\string\CymShiftJisString.hpp" />
     <ClInclude Include="include\cym\utils\string\CymStringConverter.hpp" />
     <ClInclude Include="include\cym\utils\string\CymU8String.hpp" />
+    <ClInclude Include="include\cym\vm\CymVM.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="infix-operators.cymi" />

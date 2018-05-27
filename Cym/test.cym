@@ -1,4 +1,5 @@
-cls MyClass
-	(var a)
+func sum(let a,let b)
+	ret a + b
 
-	.aiueo()
+let zero = 0
+var i = sum(zero,1)

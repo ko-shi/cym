@@ -11,7 +11,12 @@ int main() {
 	using namespace std::string_literals;
 	using namespace cym;
 
+	RData a(ConstTag{});
+	RData b(ConstTag{});
 
+	bool c = a == b;
+	c;
+	/*
 	ICode icode;
 
 
@@ -29,6 +34,6 @@ int main() {
 
 	std::cout << getNs(finish - start) << std::endl;
 
-	std::cout << icode.icode_.getJSON();
+	std::cout << icode.icode_.getJSON();*/
 	
 }
