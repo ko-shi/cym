@@ -1,72 +1,84 @@
 #ifndef CYM_RESTRICTION_HPP
 #define CYM_RESTRICTION_HPP
 
-#include<cym/lang/CymIntermediateCodeGenerator.hpp>
+#include<cym/CymBase.hpp>
+#include<utility>
+
+#ifdef CONST
+#	undef CONST
+#endif
 
 namespace cym {
 
-	struct VarTag {
-		bool operator==(VarTag)const { return true; }
-	};
-	struct ConstTag {
-		bool operator==(ConstTag)const { return true; }
-	};
-	struct ConcreteClassTag {
-		Tree *icode_identifier;
-		bool operator==(ConcreteClassTag c)const { return icode_identifier == c.icode_identifier; }
+
+	enum class RestId {
+		ANY,CONST,PARAM,FUNC,INSTANCE_OF
 	};
 
-	// Restriction data
-	using RData = std::variant<
-		VarTag,
-		ConstTag,
-		ConcreteClassTag
-	>;
+	struct RestBase {
+		virtual RestId id()const = 0;
+		virtual bool compare(const RestBase *a)const {
+			return a->id() == id();
+		}
+		virtual ~RestBase() {
+			
+		}
+	};
 
-	bool operator==(const RData &l, const RData &r) {
-		if (l.index() != r.index()) {
+	struct RestAny : RestBase {
+		virtual RestId id()const override {
+			return RestId::ANY;
+		}
+	};
+	struct RestConst : RestBase {
+		virtual RestId id()const override {
+			return RestId::CONST;
+		}
+	};
+
+	struct RestParam : RestBase {
+		virtual RestId id()const override {
+			return RestId::PARAM;
+		}
+	};
+
+	struct RestFunc : RestBase {
+		virtual RestId id()const override {
+			return RestId::FUNC;
+		}
+	};
+	struct RestInstanceOf : RestBase {
+		Str name;
+		virtual bool compare(const RestBase *a)const override{
+			if (a->id() == RestId::FUNC) {
+				return name == dynamic_cast<const RestInstanceOf*>(a)->name;
+			}
 			return false;
 		}
-		return std::visit([](const auto &l_, auto &r_) {return l_ == r_; }, l, r);
-	}
+		virtual RestId id()const override {
+			return RestId::FUNC;
+		}
+	};
 
-	class Restriction {
-	public:
-	private:
-		Vector<RData> restriction;
-	public:
-		Restriction() {
 
-		}
-		Restriction(const Restriction &r) : restriction(r.restriction) {
+	struct Restriction {
+		struct Equal {
+			bool operator()(const std::unique_ptr<RestBase> &l, const std::unique_ptr<RestBase> &r) const{
+				return l->compare(r.get());
+			}
+		};
+		std::unordered_set<std::unique_ptr<RestBase>,std::hash<std::unique_ptr<RestBase>>,Equal> rest;
 
-		}
-		Restriction(Restriction &&r) : restriction(std::move(r.restriction)) {
-
-		}
-		Restriction(const Vector<RData> &r) : restriction(r) {
-
-		}
-		void add(const RData &r) {
-			restriction.pushBack(r);
-		}
-		void add(const Restriction &r) {
-			restriction.pushBack(r.restriction);
-			std::sort(restriction.begin(), restriction.end());
-			const auto itr = std::unique(restriction.begin(), restriction.end());
-			restriction.reduceSize(restriction.end() - itr);
-		}
-		bool satisfy(const Restriction &r)const {
-			// O(n)!!!!!!!
-			for (auto i : r.restriction) {
-				if (std::find(restriction.begin(), restriction.end(), i) == restriction.end()) {
+		bool operator==(const Restriction &r) {
+			if (rest.size() != r.rest.size()) {
+				return false;
+			}
+			for (const auto &i : rest) {
+				if (r.rest.find(i) == r.rest.end()) {
 					return false;
 				}
 			}
-			true;
-		}
-		Size priority()const {
-			return restriction.size();
+			return true;
 		}
 	};
 }

@@ -21,7 +21,11 @@ namespace cym {
 		Size index = 0;
 	public:
 		Size emplace(const Key &key,const T &data) {
-			link.emplace(key, index);
+			const auto r = link.emplace(key, index);
+			if (!r.second) {
+				//　キーが既にあったとき新しい値で代入
+				link[key] = index;
+			}
 			indexed.emplace_back(data);
 			return ++index;
 		}

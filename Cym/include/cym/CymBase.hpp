@@ -16,6 +16,8 @@ namespace cym {
 	using Map = std::unordered_map<T, Y>;
 	template<class T>
 	using Set = std::unordered_set<T>;
+	template<class T>
+	using MultiSet = std::unordered_multiset<T>;
 	using Str = std::u16string;
 	using StrView = std::u16string_view;
 	using Char = char16_t;

@@ -71,9 +71,6 @@
     <ClInclude Include="include\cym\utils\string\CymU8String.hpp">
       <Filter>headers\utils\string</Filter>
     </ClInclude>
-    <ClInclude Include="include\cym\parser\CymStringOperation.hpp">
-      <Filter>headers\parser</Filter>
-    </ClInclude>
     <ClInclude Include="include\cym\Cym.hpp">
       <Filter>headers</Filter>
     </ClInclude>
@@ -88,6 +85,21 @@
     </ClInclude>
     <ClInclude Include="include\cym\lang\CymRestriction.hpp">
       <Filter>headers\lang</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cym\parser\CymParser.hpp">
+      <Filter>headers\parser</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cym\lang\CymAST.hpp">
+      <Filter>headers\lang</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cym\lang\CymInstancedType.hpp">
+      <Filter>headers\lang</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cym\utils\CymForwardIndexMap.hpp">
+      <Filter>headers\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cym\parser\CymLexer.hpp">
+      <Filter>headers\parser</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

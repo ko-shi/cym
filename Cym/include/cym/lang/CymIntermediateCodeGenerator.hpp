@@ -423,7 +423,7 @@ namespace cym {
 				Size indent_level = countStr(str, single_indent_);
 				Size cur_indent_level = scope_.size() - 1;
 				if (indent_level == cur_indent_level) {
-					const auto token = takeWhile(deleteSpace(str), [](Char c) {return c != u' '; });
+					const auto token = takeWhile(removeSpace(str), [](Char c) {return c != u' '; });
 					if (token == u"cls") {
 						const auto name = takeNextToken(str, token, {});
 						scope_.back().restrictions.emplace(name);

@@ -24,11 +24,15 @@
   <ItemGroup>
     <ClInclude Include="include\cym\Cym.hpp" />
     <ClInclude Include="include\cym\CymBase.hpp" />
+    <ClInclude Include="include\cym\lang\CymAST.hpp" />
     <ClInclude Include="include\cym\lang\CymEmbodiedCodeGentrator.hpp" />
+    <ClInclude Include="include\cym\lang\CymInstancedType.hpp" />
     <ClInclude Include="include\cym\lang\CymIntermediateCodeGenerator.hpp" />
     <ClInclude Include="include\cym\lang\CymRestriction.hpp" />
-    <ClInclude Include="include\cym\parser\CymStringOperation.hpp" />
+    <ClInclude Include="include\cym\parser\CymParser.hpp" />
+    <ClInclude Include="include\cym\parser\CymLexer.hpp" />
     <ClInclude Include="include\cym\utils\CymDoubleKeyMap.hpp" />
+    <ClInclude Include="include\cym\utils\CymForwardIndexMap.hpp" />
     <ClInclude Include="include\cym\utils\CymHandStack.hpp" />
     <ClInclude Include="include\cym\utils\CymNumConverter.hpp" />
     <ClInclude Include="include\cym\utils\CymStack.hpp" />

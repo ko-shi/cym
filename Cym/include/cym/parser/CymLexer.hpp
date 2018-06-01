@@ -1,5 +1,5 @@
-#ifndef CYM_STRING_OPERATION_HPP
-#define CYM_STRING_OPERATION_HPP
+#ifndef CYM_LEXER_HPP
+#define CYM_LEXER_HPP
 
 #include<string_view>
 #include<string>
@@ -78,7 +78,7 @@ namespace cym {
 	bool isSub(const StrView &str, const StrView &sub) {
 		return str.data() <= sub.data() && str.data() + str.size() >= sub.data() + str.size();
 	}
-	StrView deleteSpace(const StrView &str) {
+	StrView removeSpace(const StrView &str) {
 		return getRemainedStr(str, takeWhile(str, [](auto c) {return c == u' '; }));
 	}
 	StrView takeToken(const StrView &str,const Vector<StrView> &infixes,bool can_delete_front_space = true) {
@@ -91,7 +91,7 @@ namespace cym {
 		};
 		const auto takeWhileName = [&](StrView word) {return takeWhile(word, [&](auto c) {return std::none_of(specials.begin(), specials.end(), [&](auto s) {return s == c; }); }); };
 		const auto word = can_delete_front_space ? 
-			deleteSpace(str)
+			removeSpace(str)
 			: str;
 		const auto until_space = takeWhile(word, [](Char c) {return c != u' '; });
 		if (std::find(infixes.begin(), infixes.end(), until_space) != infixes.end()) {
