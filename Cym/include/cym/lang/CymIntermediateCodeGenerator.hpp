@@ -2,8 +2,8 @@
 #define CYM_INTERMEDIATE_CODE_GENERATOR_HPP
 
 #include<deque>
-
-#include<cym/parser/CymStringOperation.hpp>
+/*
+#include<cym/parser/Lexer.hpp>
 #include<cym/utils/CymNumConverter.hpp>
 #include<cym/utils/CymTree.hpp>
 #include<cym/utils/CymStack.hpp>
@@ -62,7 +62,7 @@ namespace cym {
 				case TokenKind::DECIMAL:
 				case TokenKind::NUMBER:
 				case TokenKind::STRINGLITERAL:
-				case TokenKind::PARAM:
+				case TokenKind::VAR:
 					call_list.emplaceBack(kind, token);
 					break;
 				case TokenKind::FUNC:
@@ -129,7 +129,7 @@ namespace cym {
 				case TokenKind::STRINGLITERAL:
 					tree.addWhenArray(Tree(Str(name.substr(1,name.size() - 2))));
 					break;
-				case TokenKind::PARAM:{
+				case TokenKind::VAR:{
 					tree.addWhenArray(getParamTree(Str(name)));
 					break;
 				}
@@ -205,7 +205,7 @@ namespace cym {
 			const auto token = takeToken(code,infixes);
 			const TokenKind kind = getTokenKind(token, infixes, reserved_words_);
 
-			/* Å‰‚Ì’PŒê‚ª’è‹`Ï‚Ý‚ÌŒ^§–ñ‚Ì‚Æ‚« */
+			/* Å‰‚Ì’PŒê‚ª’è‹`Ï‚Ý‚ÌŒ^§–ñ‚Ì‚Æ‚« 
 			for (auto itr = scope_.rbegin(); itr != scope_.rend(); itr++) {
 				const auto r = itr->restrictions;
 				if (r.find(token) != r.end()) {
@@ -216,7 +216,7 @@ namespace cym {
 
 			switch (kind) {
 			case TokenKind::EXPRESSION:
-				/* Constructor */
+				/* Constructor 
 				if (!(scope_kind == ScopeKind::DEFINING_CLASS || scope_kind == ScopeKind::WAITING_CONS_DEFINING)) {
 					break;
 				}
@@ -314,7 +314,7 @@ namespace cym {
 				for (const auto &arg : listArgs(func_decl, infixes)) {
 					const auto type_restriction = takeToken(arg, infixes);
 					arg_restrictions.addWhenArray(Tree(Str(type_restriction)));
-					/* TODO : type_restriction */
+					/* TODO : type_restriction 
 					const auto name = takeNextToken(code, type_restriction, infixes);
 					arg_names.addWhenArray(Tree(Str(name)));
 				}
@@ -458,5 +458,5 @@ namespace cym {
 
 
 }
-
+*/
 #endif

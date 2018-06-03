@@ -5,7 +5,7 @@
 #include<cym/CymBase.hpp>
 #include<cym/utils/CymVector.hpp>
 #include<cym/utils/CymTCPair.hpp>
-#include<cym/parser/CymStringOperation.hpp>
+#include<cym/parser/CymLexer.hpp>
 
 #ifdef  max
 

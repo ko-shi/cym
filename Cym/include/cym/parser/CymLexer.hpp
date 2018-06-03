@@ -81,7 +81,7 @@ namespace cym {
 	StrView removeSpace(const StrView &str) {
 		return getRemainedStr(str, takeWhile(str, [](auto c) {return c == u' '; }));
 	}
-	StrView takeToken(const StrView &str,const Vector<StrView> &infixes,bool can_delete_front_space = true) {
+	StrView takeToken(const StrView &str,const Map<StrView,Size> &infixes,bool can_delete_front_space = true) {
 
 		const auto specials = Vector<Char>{
 			u'(' ,u')',u'[' ,u']',u'{',u'}' ,u'"',u'<',u'>',
@@ -94,7 +94,7 @@ namespace cym {
 			removeSpace(str)
 			: str;
 		const auto until_space = takeWhile(word, [](Char c) {return c != u' '; });
-		if (std::find(infixes.begin(), infixes.end(), until_space) != infixes.end()) {
+		if (infixes.count(str)) {
 			return until_space;
 		}
 
@@ -123,7 +123,7 @@ namespace cym {
 				return rangeOf(name,bracket_part);
 			}
 			else {
-				return rangeOf(name, takeToken(next, false));// rangeOf is like operator+
+				return rangeOf(name, takeToken(next,{},false));// rangeOf is like operator+
 			}
 		}
 		case u',':
@@ -140,10 +140,10 @@ namespace cym {
 		}
 		return name;
 	}
-	StrView takeNextToken(const StrView &origin,const StrView &last_token,const Vector<StrView> &infixes) {
+	StrView takeNextToken(const StrView &origin,const StrView &last_token,const Map<StrView,Size> &infixes) {
 		return takeToken(getRemainedStr(origin, last_token),infixes);
 	}
-	StrView takeExpression(const StrView &str,const Vector<StrView> &infixes) {
+	StrView takeExpression(const StrView &str,const Map<StrView, Size> &infixes) {
 		const auto word = takeToken(str,infixes);
 		const auto next_word = getRemainedStr(str, takeWhile(getRemainedStr(str, word), [](auto c) {return c == u' '; }));
 		return word.empty() || next_word.empty() || next_word[0] == u',' ? word : rangeOf(word, takeExpression(next_word,infixes));
@@ -152,15 +152,15 @@ namespace cym {
 		return n == 0 ? b : repeat(str, n - 1, b + str);
 	}
 	// 114514,yaju,MUR => @,@,@
-	Str replaceExpression(const StrView &str,const Vector<StrView> &infixes,int expr_num = 0) {
+	Str replaceExpression(const StrView &str, const Map<StrView, Size> &infixes,int expr_num = 0) {
 		const auto expr = takeExpression(str,infixes);
 		const auto next = getRemainedStr(str, takeWhile(getRemainedStr(str, expr), [](auto c) {return c == u' ' || c == u','; }));
 		return next.empty() ? repeat(u"@",expr_num + 1): replaceExpression(next,infixes,expr_num + 1);
 	}
 	// This function's arg must be deleted the initial spaces.
-	Str toFuncName(const StrView &token, const Vector<StrView> &infixes) {
+	Str toFuncName(const StrView &token, const Map<StrView, Size> &infixes) {
 
-		if (std::find(infixes.begin(), infixes.end(), token) != infixes.end()) {
+		if (infixes.count(token)) {
 			return Str(u"@") + Str(token) + u"@";
 		}
 
@@ -186,7 +186,7 @@ namespace cym {
 		return Str(name_part) + args_replaced + toFuncName(next, infixes);
 	}
 	// This function's arg must be deleted the initial spaces.
-	Vector<StrView> listArgs(const StrView &func,const Vector<StrView> &infixes) {
+	Vector<StrView> listArgs(const StrView &func,const Map<StrView, Size> &infixes) {
 		const auto specials = Vector<Char>{
 			u'(' ,u'[' ,u'{' ,u'"',u'<',
 			u'+' ,u'-' ,u'*' ,u'/' ,
@@ -209,7 +209,7 @@ namespace cym {
 		list.pushBack(listArgs(next,infixes));
 		return list;
 	}
-	TokenKind getTokenKind(const StrView &token/* please convert to StrView */, const Vector<StrView> &infixes,const Vector<Str> &reserved_words,const Str *func_name = nullptr) {
+	TokenKind getTokenKind(const StrView &token/* please convert to StrView */, const Map<StrView, Size> &infixes,const Str *func_name = nullptr) {
 		TokenKind kind;
 		getNumKind(token, kind);
 		if (kind != TokenKind::ERROR) {
@@ -218,17 +218,14 @@ namespace cym {
 		if (token.size() >= 2 && token[0] == u'"' && token.back() == u'"') {
 			return TokenKind::STRINGLITERAL;
 		}
-		if (std::find(reserved_words.begin(), reserved_words.end(), Str(token)) != reserved_words.end()) {
-			return TokenKind::RESERVEDWORD;
-		}
-		if (std::find(infixes.begin(), infixes.end(), Str(token)) != infixes.end()) {
+		if (infixes.count(token)) {
 			return TokenKind::INFIX;
 		}
 
 		const auto lastJunction = [](const auto &s) {
 
 			if (s.find(u'@') == s.npos) {
-				return TokenKind::PARAM;
+				return TokenKind::VAR;
 			}
 			else if (std::all_of(s.begin(), s.end(), [](Char c) {return c == u'@'; })) {
 				return TokenKind::EXPRESSION;

@@ -14,6 +14,9 @@ namespace cym {
 		std::unordered_map<Key, Size> link;
 		Size index = 0;
 	public:
+		bool exist(const Key &key)const {
+			return link.count(key);
+		}
 		Size emplace(const Key &key) {
 			const auto r = link.emplace(key, index);
 			if (!r.second) {

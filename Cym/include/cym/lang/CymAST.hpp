@@ -6,21 +6,32 @@
 #include<cym/lang/CymRestriction.hpp>
 #include<cym/utils/CymTCPair.hpp>
 #include<cym/utils/CymForwardIndexMap.hpp>
+#include<cym/utils/string/CymStringConverter.hpp>
 
 #include<variant>
+
+#ifdef ERROR
+#	undef ERROR
+#endif
 
 namespace cym {
 	enum class ASTId {
 		BASE,
 		ERROR,
 		NUM,
-		DEF_PARAM,
+		DEF_VAR,
+		VAR,
+		EXTERNAL_VAR,
 		CALL_FUNC,
+		INFIX,
 	};
 
 	struct ASTBase {
 		virtual ASTId id() const{
 			return ASTId::BASE;
+		}
+		virtual Str toStr()const {
+			return u"(base)\n\r";
 		}
 		virtual ~ASTBase() {
 
@@ -28,33 +39,116 @@ namespace cym {
 	};
 	struct ASTCompileError : ASTBase {
 		Str message;
-		virtual ASTId id() const {
+		ASTCompileError(const Str &s) : message(s) {
+
+		}
+		virtual Str toStr()const override{
+			return Str(u"CompileError : \"") + message + Str(u"\"\n\r");
+		}
+		virtual ASTId id() const override{
 			return ASTId::ERROR;
 		}
 	};
 	struct ASTNum : ASTBase {
 		Int i;
-
+		ASTNum(Int _i) : i(_i){
+		
+		}
+		virtual Str toStr()const override {
+			return Str(u"Number : ") + toU16String(i);
+		}
 		virtual ASTId id() const override {
 			return ASTId::NUM;
 		}
 	};
-	struct ASTDefParam : ASTBase {
+	struct ASTDefVar : ASTBase {
 		Str name;
+		Str restriction;
 		Size index;
 		std::unique_ptr<ASTBase> initializer;
-		ASTDefParam(const Str &n, Size i) : name(n), index(i) {
+		ASTDefVar(StrView n,StrView r,Size i) : name(n),restriction(r), index(i) {
 
 		}
+		virtual Str toStr()const override {
+			return Str(u"Define Variable{\n\r")
+				+ Str(u"name = \"") + name + Str(u"\"\n\r")
+				+ Str(u"index = ") + toU16String(index) + Str(u"\n\r")
+				+ Str(u"initializer = ") + initializer->toStr()
+				+ Str(u"}\n\r");
+		}
 		virtual ASTId id()const override {
-			return ASTId::DEF_PARAM;
+			return ASTId::DEF_VAR;
+		}
+	};
+	struct ASTVar : ASTBase {
+		Str name;
+		Size index;
+		ASTVar(const Str &n, Size i) : name(n), index(i) {
+
+		}
+		virtual Str toStr()const override {
+			return Str(u"Variable{")
+				+ Str(u"name = \"") + name + Str(u"\",")
+				+ Str(u"index = ") + toU16String(index) + Str(u"}\n\r");
+		}
+		virtual ASTId id()const override {
+			return ASTId::VAR;
+		}
+	};
+	struct ASTExternalVar : ASTBase {
+		Str name;
+		Size retrace_num;
+		Size index;
+		ASTExternalVar(const Str &n, Size r, Size i) : name(n), retrace_num(r), index(i) {
+
+		}
+		virtual Str toStr()const override {
+			return Str(u"External Variable{\n\r")
+				+ Str(u"name = \"") + name + Str(u"\"\n\r")
+				+ Str(u"index = ") + toU16String(index) + Str(u"\n\r")
+				+ Str(u"}\n\r");
+		}
+		virtual ASTId id()const override {
+			return ASTId::EXTERNAL_VAR;
 		}
 	};
 	struct ASTCallFunc : ASTBase {
 		Str name;
-		Vector<Str> args;
+		Vector<std::unique_ptr<ASTBase>> args;
+		virtual Str toStr()const override {
+			Str temp;
+			for (auto &i : args) {
+				temp += i->toStr() + u",";
+			}
+			if (!temp.empty())temp.pop_back();
+			return Str(u"Call Function{\n\r")
+				+ Str(u"name = \"") + name + Str(u"\"\n\r")
+				+ Str(u"args = ") + temp + Str(u"\n\r")
+				+ Str(u"}\n\r");
+		}
 		virtual ASTId id()const override {
 			return ASTId::CALL_FUNC;
+		}
+	};
+	struct ASTInfix : ASTBase {
+		Str name;
+		std::unique_ptr<ASTBase> l, r;
+
+		ASTInfix(const Str s) : name(s), l(), r() {
+
+		}
+		ASTInfix(const Str s, std::unique_ptr<ASTBase> &&_l, std::unique_ptr<ASTBase> &&_r) : name(s), l(std::move(_l)), r(std::move(_r)) {
+
+		}
+		virtual Str toStr()const override {
+			return Str(u"Call Infix{\n\r")
+				+ Str(u"name = \"") + name + Str(u"\"\n\r")
+				+ Str(u"left = ") + (l ? l->toStr() : Str(u"Error:null")) + Str(u"\n\r")
+				+ Str(u"right = ") + (r ? r->toStr() : Str(u"Error:null")) + Str(u"\n\r")
+				+ Str(u"}\n\r");
+		}
+		virtual ASTId id()const override {
+			return ASTId::INFIX;
 		}
 	};
 
@@ -64,13 +158,22 @@ namespace cym {
 	struct FuncDef {
 		Str name;
 		FIndexMap<StrView> param_id;
-
+		// bool unreferable = false;
 		Vector<Pair<Str, Restriction>> args;
 		Restriction ret_rest;
 		Vector<std::unique_ptr<ASTBase>> order;
 
 		Vector<std::unique_ptr<FuncDef>> inner_func;
 		Vector<std::unique_ptr<ClassDef>> inner_cls;
+
+		Str toStr()const{
+			Str temp;
+			for (const auto &i : order) {
+				temp += i->toStr();
+			}
+			return Str(u"name = ") + name + Str(u"\n\r")
+				+ Str(u"ast = ") + temp;
+		}
 	};
 	struct ClassDef {
 		Size cls_id;

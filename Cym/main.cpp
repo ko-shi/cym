@@ -10,30 +10,19 @@ int main() {
 
 	using namespace std::string_literals;
 	using namespace cym;
+	
+	Parser parser;
 
-	RData a(ConstTag{});
-	RData b(ConstTag{});
-
-	bool c = a == b;
-	c;
-	/*
-	ICode icode;
-
-
-	std::string str;
-
-
-	std::fstream file("test.cym");
-
-	while (std::getline(file, str)) {
-		icode.addLine(toU16String(toU8String(str)));
+	std::fstream source("test.cym");
+	std::string input;
+	while (std::getline(source, input)) {
+		parser.addCode(toU16String(input));
 	}
 	const auto start = now();
-	icode.compile();
+	parser.parse();
 	const auto finish = now();
 
 	std::cout << getNs(finish - start) << std::endl;
-
-	std::cout << icode.icode_.getJSON();*/
+	std::cout << parser.ast_.toStr();
 	
 }

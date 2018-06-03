@@ -1,5 +1,1 @@
-func sum(let a,let b)
-	ret a + b
-
-let zero = 0
-var i = sum(zero,1)
+var a = (1 + 3) * 5

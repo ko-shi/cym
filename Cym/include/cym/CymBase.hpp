@@ -5,6 +5,8 @@
 #include<unordered_set>
 #include<string>
 #include<string_view>
+#include<memory>
+#include<utility>
 #include<tuple>
 #include<sstream>
 
@@ -26,7 +28,7 @@ namespace cym {
 	enum class TokenKind {
 		ERROR,
 		RESERVEDWORD, // var,func,class
-		PARAM, // param
+		VAR, // param
 		NUMBER, // 1 or 2 and so on.
 		DECIMAL, // 1.14514
 		INFIX, // +,-,*,/,and so on.
