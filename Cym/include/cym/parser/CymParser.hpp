@@ -7,6 +7,7 @@
 #include<cym/lang/CymAST.hpp>
 #include<cym/parser/CymLexer.hpp>
 #include<cym/utils/CymNumConverter.hpp>
+#include<cym/lang/CymErrorMessage.hpp>
 
 namespace cym {
 
@@ -27,13 +28,16 @@ namespace cym {
 		};
 
 		const StrView single_indent_ = u"    ";
-		Vector<ScopeSpecDef> scope_def;
+		Vector<ScopeSpecDef> scope_def_;
 		Vector<Str> code_;
+		Size line_num_;
+		StrView line_;
+		Vector<ErrorMessage> error_;
 		FuncDef ast_;
 		Scope cur_scope_;
 	public:
 		Parser() : ast_{ u"main"} {
-			scope_def.push_back({ {{u"+",10},{u"-",10},{u"*",20},{u"/",20}},{u"func",u"var"} });
+			scope_def_.push_back({ {{u"+",10},{u"-",10},{u"*",20},{u"/",20}},{u"func",u"var"} });
 			cur_scope_ = &ast_;
 		}
 		void addCode(const Str &code) {
@@ -62,7 +66,7 @@ namespace cym {
 					const auto token = takeWhile(removeSpace(str), [](Char c) {return c != u' '; });
 					if (token == u"cls") {
 						const auto name = takeNextToken(str, token, {});
-						scope_def.back().restrictions.emplaceBack(name);
+						scope_def_.back().restrictions.emplaceBack(name);
 					}
 				}
 				if (depth_base > depth) {
@@ -84,21 +88,22 @@ namespace cym {
 
 			scanScopeDef(0);
 
-			Size index = 0;
+			line_num_ = 0;
 			for (const auto &s : code_) {
-				parseLine(StrView(s), index);
-				index++;
+				line_ = StrView(s);
+				parseLine();
+				line_num_++;
 			}
 		}
-		void parseLine(StrView str,Size line) {
-			const auto &rests = scope_def.back().restrictions;
-			const auto head = takeToken(str, infixes());
+		void parseLine() {
+			const auto &rests = scope_def_.back().restrictions;
+			const auto head = takeToken(line_, infixes());
 			if (std::find(rests.begin(), rests.end(), head) != rests.end()) {
 				// Restriction
-				const auto equal = takeNextToken(str,takeNextToken(str, head, infixes()),infixes());
+				const auto equal = takeNextToken(line_,takeNextToken(line_, head, infixes()),infixes());
 				if (equal == u"=") {
 					// define param
-					caseDefineParam(str, head, line);
+					caseDefineParam(line_, head);
 				}
 				else {
 					if (head == u"func") {
@@ -111,12 +116,12 @@ namespace cym {
 			}
 		}
 		const Map<StrView, Size>& infixes()const {
-			return scope_def.back().infixes;
+			return scope_def_.back().infixes;
 		}
 		const Vector<StrView>& restrictions()const {
-			return scope_def.back().restrictions;
+			return scope_def_.back().restrictions;
 		}
-		void caseDefineParam(StrView str,StrView head,Size line) {
+		void caseDefineParam(StrView str,StrView head) {
 			if (cur_scope_.index() != FUNC_SCOPE) {
 				return;
 			}
@@ -131,87 +136,97 @@ namespace cym {
 			func.order.emplace_back(new ASTDefVar(std::move(ast_defvar)));
 		}
 		std::unique_ptr<ASTBase> parseExpr(StrView expr,Vector<std::unique_ptr<ASTBase>> &&former,Size prev_priority = -1) {
+			const auto recurse = [&](StrView hind) {
+				hind = removeSpace(hind);
+				if (hind.empty()) {
+					while (former.size() > 2) {
+						auto &first = former[0];
+						auto &second = former[1];
+						auto &third = former[2];
+
+						if (second->id() == ASTId::UNSOLVED_INFIX) {
+							const auto infix = dynamic_cast<ASTUnsolvedInfix*>(second.get());
+							third.reset(new ASTInfix(infix->name, std::move(first), std::move(third)));
+
+							former.erase(former.begin());
+							former.erase(former.begin());
+						}
+					}
+					if (former.size() == 1) {
+						
+						return std::move(former[0]);
+					}
+					error_.emplace_back(ErrorMessage::ENDED_WITH_INFIX, line_num_, distance(line_, expr), expr);
+					return std::make_unique<ASTBase>();
+				}
+				return parseExpr(hind, std::move(former), prev_priority);
+			};
+
 			if (cur_scope_.index() != FUNC_SCOPE) {
-				return std::make_unique<ASTCompileError>(ASTCompileError(u"not in function scope."));
+				return std::make_unique<ASTBase>();
 			}
 			auto &func = *std::get<FUNC_SCOPE>(cur_scope_);
 
 			const auto token = takeToken(expr, infixes());
 			const auto kind = getTokenKind(token, infixes());
-			
 			auto hind = getRemainedStr(expr, token);
-			switch (kind) {
-				if (former.empty() || former.back()->id() == ASTId::INFIX) {
-					case TokenKind::NUMBER:
-						former.emplace_back(new ASTNum(toInt(token)));
-								break;
-					case TokenKind::VAR:
-						if (func.param_id.exist(token)) {
-							former.emplace_back(new ASTVar(Str(token), func.param_id[token]));
-						}
-						else {
-							// ñ¢é¿ëï : äOïîïœêîÇÃéÊìæ
-							// Ç±ÇÃä÷êîÇÕunreferableÇ…Ç»ÇÈ
-							former.emplace_back(new ASTCompileError(u"\"" + Str(token) + u"\" is not defined above."));
-						}
-						break;
-					case TokenKind::FUNC: {
-						ASTCallFunc call_func;
-						call_func.name = toFuncName(token, infixes());
-						for (const auto arg : listArgs(token, infixes())) {
-							call_func.args.emplace_back(parseExpr(arg, {}));
-						}
-						former.emplace_back(new ASTCallFunc(std::move(call_func)));
-						break;
-					}
-					case TokenKind::EXPRESSION:
-						former.emplace_back(parseExpr(bracketContent(token), {}));
-						break;
-				}
-				else if (kind != TokenKind::INFIX) {
-					former.emplace_back(new ASTCompileError(Str(u"Double straight non-index token is not allowed.")));
-				}
-			case TokenKind::INFIX:
+
+
+			if (kind == TokenKind::INFIX) {
 				if (former.empty()) {
-					former.emplace_back(new ASTCompileError(Str(u"Head infix function is not allowed.")));
-					break;
+					error_.emplace_back(ErrorMessage::BEGUN_WITH_INFIX,line_num_,distance(line_,token),token);
+					return recurse(hind);
 				}
-				const auto now_priority = scope_def.back().infixes[token];
-				if (prev_priority < now_priority) {
-					if (former.back()->id() == ASTId::INFIX) {
-						former.back().reset(new ASTCompileError(Str(u"Double straight index token is not allowed.")));
+				else if (former.back()->id() == ASTId::UNSOLVED_INFIX) {
+					error_.emplace_back(ErrorMessage::CONCECTIVE_INFIXES, line_num_, distance(line_, token), token);
+					return recurse(hind);
+				}
+			}
+			else if (!former.empty() && former.back()->id() != ASTId::UNSOLVED_INFIX) {
+				error_.emplace_back(ErrorMessage::CONCECTIVE_NONINFIXES, line_num_, distance(line_, token), token);
+				return recurse(hind);
+			}
+
+			switch (kind) {
+			case TokenKind::NUMBER:
+				former.emplace_back(new ASTNum(toInt(token)));
 						break;
-					}
+			case TokenKind::VAR:
+				if (func.param_id.exist(token)) {
+					former.emplace_back(new ASTVar(Str(token), func.param_id[token]));
+				}
+				else {
+					// ñ¢é¿ëï : äOïîïœêîÇÃéÊìæ
+					// Ç±ÇÃä÷êîÇÕunreferableÇ…Ç»ÇÈ
+					error_.emplace_back(ErrorMessage::UNKNOWN_VARIABLE, line_num_, distance(line_, token), token);
+				}
+				break;
+			case TokenKind::FUNC: {
+				ASTCallFunc call_func;
+				call_func.name = toFuncName(token, infixes());
+				for (const auto arg : listArgs(token, infixes())) {
+					call_func.args.emplace_back(parseExpr(arg, {}));
+				}
+				former.emplace_back(new ASTCallFunc(std::move(call_func)));
+				break;
+			}
+			case TokenKind::EXPRESSION:
+				former.emplace_back(parseExpr(bracketContent(token), {}));
+				break;
+			case TokenKind::INFIX:
+				const auto now_priority = scope_def_.back().infixes[token];
+				if (prev_priority < now_priority) {
 					const auto right_hand = takeToken(hind, infixes());
 					former.back().reset(new ASTInfix(Str(token), std::move(former.back()), parseExpr(right_hand, {})));
 					hind = getRemainedStr(expr, right_hand);
 				}
 				else {
-					former.emplace_back(new ASTInfix(Str(token)));
+					former.emplace_back(new ASTUnsolvedInfix(Str(token)));
 				}
 				prev_priority = now_priority;
 				break;
 			}
-			if (hind.empty()) {
-				while (former.size() > 2) {
-					auto &first = former[0];
-					auto &second = former[1];
-					auto &third = former[2];
-
-					if (second->id() == ASTId::INFIX) {
-						const auto infix = dynamic_cast<ASTInfix*>(second.get());
-						third.reset(new ASTInfix(infix->name, std::move(first), std::move(third)));
-
-						former.erase(former.begin());
-						former.erase(former.begin());
-					}
-				}
-				if (former.size() == 1) {
-					return std::move(former[0]);
-				}
-				return std::make_unique<ASTCompileError>(ASTCompileError(Str(u"Error in solving infixes.")));
-			}
-			return parseExpr(hind, std::move(former), prev_priority);
+			return recurse(hind);
 		}
 
 	};

@@ -26,6 +26,7 @@
     <ClInclude Include="include\cym\CymBase.hpp" />
     <ClInclude Include="include\cym\lang\CymAST.hpp" />
     <ClInclude Include="include\cym\lang\CymEmbodiedCodeGentrator.hpp" />
+    <ClInclude Include="include\cym\lang\CymErrorMessage.hpp" />
     <ClInclude Include="include\cym\lang\CymInstancedType.hpp" />
     <ClInclude Include="include\cym\lang\CymIntermediateCodeGenerator.hpp" />
     <ClInclude Include="include\cym\lang\CymRestriction.hpp" />

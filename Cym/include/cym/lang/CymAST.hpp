@@ -23,6 +23,7 @@ namespace cym {
 		VAR,
 		EXTERNAL_VAR,
 		CALL_FUNC,
+		UNSOLVED_INFIX,
 		INFIX,
 	};
 
@@ -31,22 +32,10 @@ namespace cym {
 			return ASTId::BASE;
 		}
 		virtual Str toStr()const {
-			return u"(base)\n\r";
+			return u"(base)\n";
 		}
 		virtual ~ASTBase() {
 
-		}
-	};
-	struct ASTCompileError : ASTBase {
-		Str message;
-		ASTCompileError(const Str &s) : message(s) {
-
-		}
-		virtual Str toStr()const override{
-			return Str(u"CompileError : \"") + message + Str(u"\"\n\r");
-		}
-		virtual ASTId id() const override{
-			return ASTId::ERROR;
 		}
 	};
 	struct ASTNum : ASTBase {
@@ -70,11 +59,11 @@ namespace cym {
 
 		}
 		virtual Str toStr()const override {
-			return Str(u"Define Variable{\n\r")
-				+ Str(u"name = \"") + name + Str(u"\"\n\r")
-				+ Str(u"index = ") + toU16String(index) + Str(u"\n\r")
+			return Str(u"Define Variable{\n")
+				+ Str(u"name = \"") + name + Str(u"\"\n")
+				+ Str(u"index = ") + toU16String(index) + Str(u"\n")
 				+ Str(u"initializer = ") + initializer->toStr()
-				+ Str(u"}\n\r");
+				+ Str(u"}\n");
 		}
 		virtual ASTId id()const override {
 			return ASTId::DEF_VAR;
@@ -89,7 +78,7 @@ namespace cym {
 		virtual Str toStr()const override {
 			return Str(u"Variable{")
 				+ Str(u"name = \"") + name + Str(u"\",")
-				+ Str(u"index = ") + toU16String(index) + Str(u"}\n\r");
+				+ Str(u"index = ") + toU16String(index) + Str(u"}\n");
 		}
 		virtual ASTId id()const override {
 			return ASTId::VAR;
@@ -103,10 +92,10 @@ namespace cym {
 
 		}
 		virtual Str toStr()const override {
-			return Str(u"External Variable{\n\r")
-				+ Str(u"name = \"") + name + Str(u"\"\n\r")
-				+ Str(u"index = ") + toU16String(index) + Str(u"\n\r")
-				+ Str(u"}\n\r");
+			return Str(u"External Variable{\n")
+				+ Str(u"name = \"") + name + Str(u"\"\n")
+				+ Str(u"index = ") + toU16String(index) + Str(u"\n")
+				+ Str(u"}\n");
 		}
 		virtual ASTId id()const override {
 			return ASTId::EXTERNAL_VAR;
@@ -121,13 +110,27 @@ namespace cym {
 				temp += i->toStr() + u",";
 			}
 			if (!temp.empty())temp.pop_back();
-			return Str(u"Call Function{\n\r")
-				+ Str(u"name = \"") + name + Str(u"\"\n\r")
-				+ Str(u"args = ") + temp + Str(u"\n\r")
-				+ Str(u"}\n\r");
+			return Str(u"Call Function{\n")
+				+ Str(u"name = \"") + name + Str(u"\"\n")
+				+ Str(u"args = ") + temp + Str(u"\n")
+				+ Str(u"}\n");
 		}
 		virtual ASTId id()const override {
 			return ASTId::CALL_FUNC;
+		}
+	};
+	struct ASTUnsolvedInfix : ASTBase {
+		Str name;
+		ASTUnsolvedInfix(const Str s) : name(s) {
+
+		}
+		virtual Str toStr()const override {
+			return Str(u"Unsolved Infix{\n")
+				+ Str(u"name = \"") + name + Str(u"\"\n")
+				+ Str(u"}\n");
+		}
+		virtual ASTId id()const override {
+			return ASTId::UNSOLVED_INFIX;
 		}
 	};
 	struct ASTInfix : ASTBase {
@@ -141,11 +144,11 @@ namespace cym {
 
 		}
 		virtual Str toStr()const override {
-			return Str(u"Call Infix{\n\r")
-				+ Str(u"name = \"") + name + Str(u"\"\n\r")
-				+ Str(u"left = ") + (l ? l->toStr() : Str(u"Error:null")) + Str(u"\n\r")
-				+ Str(u"right = ") + (r ? r->toStr() : Str(u"Error:null")) + Str(u"\n\r")
-				+ Str(u"}\n\r");
+			return Str(u"Call Infix{\n")
+				+ Str(u"name = \"") + name + Str(u"\"\n")
+				+ Str(u"left = ") + (l ? l->toStr() : Str(u"Error:null")) + Str(u"\n")
+				+ Str(u"right = ") + (r ? r->toStr() : Str(u"Error:null")) + Str(u"\n")
+				+ Str(u"}\n");
 		}
 		virtual ASTId id()const override {
 			return ASTId::INFIX;
@@ -171,7 +174,7 @@ namespace cym {
 			for (const auto &i : order) {
 				temp += i->toStr();
 			}
-			return Str(u"name = ") + name + Str(u"\n\r")
+			return Str(u"name = ") + name + Str(u"\n")
 				+ Str(u"ast = ") + temp;
 		}
 	};

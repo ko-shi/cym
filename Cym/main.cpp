@@ -24,5 +24,6 @@ int main() {
 
 	std::cout << getNs(finish - start) << std::endl;
 	std::cout << parser.ast_.toStr();
+	std::cout << parser.error_.toString<Str>([](const ErrorMessage &e) {return e.str() + u"\n"; });
 	
 }

@@ -148,6 +148,9 @@ namespace cym {
 		const auto next_word = getRemainedStr(str, takeWhile(getRemainedStr(str, word), [](auto c) {return c == u' '; }));
 		return word.empty() || next_word.empty() || next_word[0] == u',' ? word : rangeOf(word, takeExpression(next_word,infixes));
 	}
+	Size distance(StrView origin,StrView terminal) {
+		return terminal.data() - origin.data();
+	}
 	Str repeat(const Str &str, Size n, Str b = u"") {
 		return n == 0 ? b : repeat(str, n - 1, b + str);
 	}

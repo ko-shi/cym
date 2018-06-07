@@ -101,6 +101,9 @@
     <ClInclude Include="include\cym\parser\CymLexer.hpp">
       <Filter>headers\parser</Filter>
     </ClInclude>
+    <ClInclude Include="include\cym\lang\CymErrorMessage.hpp">
+      <Filter>headers\lang</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="test.cym">
