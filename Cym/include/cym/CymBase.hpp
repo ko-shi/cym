@@ -28,14 +28,13 @@ namespace cym {
 	enum class TokenKind {
 		ERROR,
 		RESERVEDWORD, // var,func,class
-		VAR, // param
+		VARIABLE, // param
 		NUMBER, // 1 or 2 and so on.
 		DECIMAL, // 1.14514
-		INFIX, // +,-,*,/,and so on.
 		FUNC, // func(), do()to() 
 		STRINGLITERAL, // "string literal"
 
-		EXPRESSION, // (a + b) it's on the way of converting
+		EXPRESSION, // (a + b)
 	};
 }
 

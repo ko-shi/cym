@@ -12,7 +12,10 @@ namespace cym {
 			CONCECTIVE_INFIXES,
 			CONCECTIVE_NONINFIXES,
 			ENDED_WITH_INFIX,
-			BEGUN_WITH_INFIX
+			BEGUN_WITH_INFIX,
+			DEFINED_VARIABLE_IN_CLASS_SCOPE,
+			DEFINED_FUNCTION_IN_CLASS_SCOPE,
+			WRITTEN_EXPRESSION_IN_CLASS_SCOPE
 		};
 		const Kind kind;
 		const Size line;
@@ -28,7 +31,10 @@ namespace cym {
 				u"Concective infixes",
 				u"Concective non-infixes",
 				u"Ended with infix",
-				u"Begun with infix"
+				u"Begun with infix",
+				u"Defined variable in class scope",
+				u"Defined function in class scope",
+				u"Written expression in class scope"
 			};
 			return table[kind];
 		}

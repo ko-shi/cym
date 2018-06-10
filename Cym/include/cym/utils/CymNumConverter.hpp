@@ -32,7 +32,7 @@ namespace cym {
 		};
 
 		if (str.empty()) {
-			return makePair(false, StrView(u""));
+			return makePair(false, StrView());
 		}
 
 		Vector<std::int8_t> buf(Limit::digits10);
@@ -42,7 +42,7 @@ namespace cym {
 			}
 			else {
 				if (buf.isEmpty()) {
-					return makePair(false, StrView(u""));
+					return makePair(false, StrView());
 				}
 				out = conv(buf);
 				return makePair(true, str.substr(0,buf.size()));
@@ -53,13 +53,13 @@ namespace cym {
 	}
 	Pair<bool, StrView> toInt(const StrView &str,Int &out) {
 		if (str.empty()) {
-			return makePair(false, StrView(u""));
+			return makePair(false, StrView());
 		}
 		if (str[0] == '-') {
 			Uint uout;
 			const auto temp = toUint(str.substr(1),uout);
 			if (!temp.first) {
-				return makePair(false, StrView(u""));
+				return makePair(false, StrView());
 			}
 			out = -Int(uout);
 			return makePair(true, rangeOf(str,temp.second));
@@ -67,7 +67,7 @@ namespace cym {
 		Uint uout;
 		const auto temp = toUint(str,uout);
 		if (!temp.first) {
-			return makePair(false, StrView(u""));
+			return makePair(false, StrView());
 		}
 		out = Int(uout);
 		return makePair(true,temp.second);
@@ -92,7 +92,7 @@ namespace cym {
 		Int first_half_val;
 		const auto first_half = toInt(until_period,first_half_val); 
 		if (!first_half.first) {
-			return makePair(false, StrView(u""));
+			return makePair(false, StrView());
 		}
 		double buf = 0.;
 		buf += static_cast<double>(first_half_val);
@@ -107,7 +107,7 @@ namespace cym {
 		Uint last_half_value;
 		const auto last_half = toUint(after_period,last_half_value);
 		if (!last_half.first) {
-			return makePair(false, StrView(u""));
+			return makePair(false, StrView());
 		}
 		if(out_int)*out_int = first_half_val;
 		out = buf + getDecimalPart(last_half_value);
@@ -125,7 +125,7 @@ namespace cym {
 		if (!try_double.first) {
 			if (try_double.second.empty()) {
 				kind = TokenKind::ERROR;
-				return makePair(std::variant<double, Int>(0.),StrView(u""));
+				return makePair(std::variant<double, Int>(0.),StrView());
 			}
 			else {
 				kind = TokenKind::NUMBER;
