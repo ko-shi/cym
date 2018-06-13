@@ -120,13 +120,13 @@ namespace cym {
 		}
 	};
 	struct ASTUnsolvedInfix : ASTBase {
-		Str name;
-		ASTUnsolvedInfix(const Str s) : name(s) {
+		StrView name;
+		ASTUnsolvedInfix(StrView s) : name(s) {
 
 		}
 		virtual Str toStr()const override {
 			return Str(u"Unsolved Infix{\n")
-				+ Str(u"name = \"") + name + Str(u"\"\n")
+				+ Str(u"name = \"") + Str(name) + Str(u"\"\n")
 				+ Str(u"}\n");
 		}
 		virtual ASTId id()const override {
@@ -134,18 +134,18 @@ namespace cym {
 		}
 	};
 	struct ASTInfix : ASTBase {
-		Str name;
+		StrView name;
 		std::unique_ptr<ASTBase> l, r;
 
-		ASTInfix(const Str s) : name(s), l(), r() {
+		ASTInfix(StrView s) : name(s), l(), r() {
 
 		}
-		ASTInfix(const Str s, std::unique_ptr<ASTBase> &&_l, std::unique_ptr<ASTBase> &&_r) : name(s), l(std::move(_l)), r(std::move(_r)) {
+		ASTInfix(StrView s, std::unique_ptr<ASTBase> &&_l, std::unique_ptr<ASTBase> &&_r) : name(s), l(std::move(_l)), r(std::move(_r)) {
 
 		}
 		virtual Str toStr()const override {
 			return Str(u"Call Infix{\n")
-				+ Str(u"name = \"") + name + Str(u"\"\n")
+				+ Str(u"name = \"") + Str(name) + Str(u"\"\n")
 				+ Str(u"left = ") + (l ? l->toStr() : Str(u"Error:null")) + Str(u"\n")
 				+ Str(u"right = ") + (r ? r->toStr() : Str(u"Error:null")) + Str(u"\n")
 				+ Str(u"}\n");
@@ -162,8 +162,8 @@ namespace cym {
 		Str name;
 		FIndexMap<StrView> param_id;
 		// bool unreferable = false;
-		Vector<Pair<Str, Restriction>> args;
-		Restriction ret_rest;
+		Vector<Pair<Str, Trait>> args;
+		Trait ret_rest;
 		Vector<std::unique_ptr<ASTBase>> order;
 
 		Vector<std::unique_ptr<FuncDef>> inner_func;
@@ -181,7 +181,7 @@ namespace cym {
 	struct ClassDef {
 		Size cls_id;
 		Str name;
-		Vector<Pair<Str, Restriction>> mem_params;
+		Vector<Pair<Str, Trait>> mem_params;
 		Vector<FuncDef> mem_funcs;
 
 		Vector<std::unique_ptr<ClassDef>> inner_cls;

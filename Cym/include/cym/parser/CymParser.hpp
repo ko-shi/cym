@@ -24,7 +24,7 @@ namespace cym {
 		FuncDef ast_;
 	public:
 		Parser() : ast_{ u"main"} {
-
+			scope_.emplaceBack(&ast_);
 		}
 		void addCode(const Str &code) {
 			const auto head = removeSpace(code);
@@ -44,29 +44,10 @@ namespace cym {
 			return countStr(code_[line], single_indent_);
 		}
 		const Scope& lastScope() const {
-			return scope_.back().scope;
+			return scope_.back();
 		}
 		Scope& lastScope() {
 			return scope_.back();
-		}
-		void scanScopeDef(Size line) {
-			const Size depth_base = scopeDepth(line);
-			for (Size i = line; i < code_.size(); i++) {
-				const Size depth = scopeDepth(i);
-				const StrView str = code_[0];
-				if (depth_base == depth) {
-					const auto token = takeWhile(removeSpace(str), [](Char c) {return c != u' '; });
-					if (token == u"cls") {
-						const auto name = takeNextToken(str, token);
-						scope_.back().restrictions.emplaceBack(name);
-					}
-				}
-				if (depth_base > depth) {
-					if (!getRemainedStr(str, takeWhile(str, [](Char c) {return c == u' '; })).empty()) {
-						break;
-					}
-				}
-			}
 		}
 		void parse() {
 			for (auto &&s : code_) {
@@ -78,8 +59,6 @@ namespace cym {
 				}
 			}
 
-			scanScopeDef(0);
-
 			line_num_ = 0;
 			for (const auto &s : code_) {
 				line_ = StrView(s);
@@ -88,44 +67,32 @@ namespace cym {
 			}
 		}
 		void parseLine() {
-			const auto &rests = scope_.back().restrictions;
-			const auto head = takeToken(line_, infixes());
-			if (std::find(rests.begin(), rests.end(), head) != rests.end()) {
-				// Restriction
-				const auto equal = takeNextToken(line_,takeNextToken(line_, head));
-				if (equal == u"=") {
-					// define variable
-					caseDefineVar(line_, head);
-				}
-				else {
-					if (head == u"func") {
-						// define function template
-						caseDefineFunc(line_, head);
-					}
-					else if (head == u"cls") {
-						// define class template
-					}
-				}
+			auto first = takeToken(line_);
+			auto second = takeNextToken(line_, first);
+			auto third = takeNextToken(line_, second);
+			if (third == u"=") {
+				caseDefineVar(line_, first,second,third);
 			}
 		}
 		Size priority(StrView infix) const{
 			const Map<StrView, Size> table =
-			{ {u'+',10},{u'-',10},{u'*',20},{u'/',20} };
+			{ {u"+",10},{u"-",10},{u"*",20},{u"/",20} };
 			const auto temp = table.find(infix);
-			return temp == table.end() ? -1 : *temp;
+			return temp == table.end() ? -1 : temp->second;
 		}
-		void caseDefineVar(StrView str,StrView head) {
+		void caseDefineVar(StrView str,StrView first,StrView second,StrView third) {
+			auto trait = first;
+			auto name = second;
 			if (lastScope().index() != FUNC_SCOPE) {
-				error_.emplace_back(ErrorMessage::DEFINED_VARIABLE_IN_CLASS_SCOPE, line_num_, distance(str, head), str.substr(head.size()));
+				error_.emplace_back(ErrorMessage::DEFINED_VARIABLE_IN_CLASS_SCOPE, line_num_, distance(str, trait), str.substr(trait.size()));
 				return;
 			}
 			auto &func = *std::get<FUNC_SCOPE>(lastScope());
-			const auto name = takeNextToken(str, head);
-			const auto equal = takeNextToken(str, name);
+			auto equal = third;
 			const auto initializer = getRemainedStr(str,equal);
 
 			func.param_id.emplace(name);
-			ASTDefVar ast_defvar(name, head, func.param_id[name]);
+			ASTDefVar ast_defvar(name, trait, func.param_id[name]);
 			ast_defvar.initializer = parseExpr(initializer, {});
 			func.order.emplace_back(new ASTDefVar(std::move(ast_defvar)));
 		}
@@ -133,7 +100,7 @@ namespace cym {
 			if (lastScope().index() != FUNC_SCOPE) {
 				error_.emplace_back(ErrorMessage::DEFINED_FUNCTION_IN_CLASS_SCOPE, line_num_, distance(str, head), str.substr(head.size()));
 				return;
-			}
+			}/*
 			auto &func = *std::get<FUNC_SCOPE>(lastScope());
 			const auto declaration = takeNextToken(str, head);
 			const auto name = toFuncName(declaration);
@@ -146,11 +113,9 @@ namespace cym {
 				new_func.args.emplace_back()
 			}
 
-			func.inner_func
+			func.inner_func*/
 		}
 		std::unique_ptr<ASTBase> parseExpr(StrView expr,Vector<std::unique_ptr<ASTBase>> &&former,Size prev_priority = -1) {
-			const auto recurse = [&](StrView hind) {
-			};
 
 			if (lastScope().index() != FUNC_SCOPE) {
 				error_.emplace_back(ErrorMessage::WRITTEN_EXPRESSION_IN_CLASS_SCOPE, line_num_, distance(line_, expr), expr);
@@ -196,7 +161,7 @@ namespace cym {
 			else {
 				// token must be infix
 				if (kind != TokenKind::VARIABLE) {
-					error_.emplace_back(ErrorMessage::CONCECTIVE_NONINFIXES, line_num_m, distance(line_, token), token);
+					error_.emplace_back(ErrorMessage::CONCECTIVE_NONINFIXES, line_num_, distance(line_, token), token);
 				}
 				else {
 					const auto now_priority = priority(token);
@@ -207,17 +172,18 @@ namespace cym {
 						const auto next = takeNextToken(expr, token);
 						if (next.empty()) {
 							error_.emplace_back(ErrorMessage::ENDED_WITH_INFIX, line_num_, distance(line_, token), token);
-							return solve();
 						}
-						former.back().reset(new ASTInfix(token, std::move(former.back()), parseExpr(next));
-						hind = takeNextToken(expr, next);
+						else {
+							former.back().reset(new ASTInfix(token, std::move(former.back()), parseExpr(next, {})));
+							hind = takeNextToken(expr, next);
+						}
 					}
 					prev_priority = now_priority;
 				}
 			}
 			hind = removeSpace(hind);
 			if (hind.empty()) {
-				if (former.size() % 2 == 1) {
+				if (former.size() % 2 == 0) {
 					error_.emplace_back(ErrorMessage::ENDED_WITH_INFIX, line_num_, distance(line_, token), token);
 					former.pop_back();
 				}

@@ -2,6 +2,7 @@
 #define CYM_RESTRICTION_HPP
 
 #include<cym/CymBase.hpp>
+#include<variant>
 #include<utility>
 
 #ifdef CONST
@@ -9,12 +10,16 @@
 #endif
 
 namespace cym {
-	struct Trait {
+	struct SubType;
+	struct Family;
+	using Trait = std::variant<SubType, Family>;
+
+	struct SubType {
 
 	};
+	struct Family {
 
-
-
+	};
 }
 
 #endif

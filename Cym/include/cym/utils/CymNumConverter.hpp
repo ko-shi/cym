@@ -18,7 +18,7 @@
 namespace cym {
 
 
-	Pair<bool, StrView> toUint(const StrView &str,Uint &out) {
+	Pair<bool, StrView> toUint(StrView str,Uint &out) {
 
 		using Limit = std::numeric_limits<Uint>;
 
@@ -51,7 +51,7 @@ namespace cym {
 		out = conv(buf);
 		return makePair(true,str);
 	}
-	Pair<bool, StrView> toInt(const StrView &str,Int &out) {
+	Pair<bool, StrView> toInt(StrView str,Int &out) {
 		if (str.empty()) {
 			return makePair(false, StrView());
 		}
@@ -72,12 +72,12 @@ namespace cym {
 		out = Int(uout);
 		return makePair(true,temp.second);
 	}
-	Int toInt(const StrView &str) {
+	Int toInt(StrView str) {
 		Int i = 0;
 		toInt(str, i);
 		return i;
 	}
-	Pair<bool, StrView> toDouble(const StrView &str,double &out,Int *out_int = nullptr) {
+	Pair<bool, StrView> toDouble(StrView str,double &out,Int *out_int/* = nullptr*/) {
 		const auto getDecimalPart = [](Uint i) {
 			double temp = 0.;
 			while (i > 0u) {
@@ -113,12 +113,12 @@ namespace cym {
 		out = buf + getDecimalPart(last_half_value);
 		return makePair(true,rangeOf(str,last_half.second));
 	}
-	double toDouble(const StrView &str) {
+	double toDouble(StrView str) {
 		double d = 0.;
 		toDouble(str, d);
 		return d;
 	}
-	Pair<std::variant<double, Int>,StrView> getNumKind(const StrView &str,TokenKind &kind) {
+	Pair<std::variant<double, Int>,StrView> getNumKind(StrView str,TokenKind &kind) {
 		double result;
 		Int result_if_int;
 		const auto try_double = toDouble(str,result,&result_if_int);
