@@ -280,6 +280,8 @@ namespace cym {
 		r = std::move(temp);
 		l = std::move(r);
 	}
+	template<class T>
+	using StdVector = Vector<T, std::allocator<T>, false>;
 }
 namespace std {
 	template<class T>

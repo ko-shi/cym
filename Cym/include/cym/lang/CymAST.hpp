@@ -3,8 +3,8 @@
 
 #include<cym/CymBase.hpp>
 #include<cym/utils/CymVector.hpp>
-#include<cym/lang/CymRestriction.hpp>
 #include<cym/utils/CymTCPair.hpp>
+#include<cym/lang/CymTrait.hpp>
 #include<cym/utils/CymForwardIndexMap.hpp>
 #include<cym/utils/string/CymStringConverter.hpp>
 
@@ -52,17 +52,18 @@ namespace cym {
 	};
 	struct ASTDefVar : ASTBase {
 		Str name;
-		Str restriction;
+		Str trait;
 		Size index;
 		std::unique_ptr<ASTBase> initializer;
-		ASTDefVar(StrView n,StrView r,Size i) : name(n),restriction(r), index(i) {
+		ASTDefVar(StrView n,StrView r,Size i) : name(n),trait(r), index(i) {
 
 		}
 		virtual Str toStr()const override {
 			return Str(u"Define Variable{\n")
 				+ Str(u"name = \"") + name + Str(u"\"\n")
+				+ Str(u"trait = ") + trait + Str(u"\n")
 				+ Str(u"index = ") + toU16String(index) + Str(u"\n")
-				+ Str(u"initializer = ") + initializer->toStr()
+				+ Str(u"initializer = ") + initializer->toStr() + Str(u"\n")
 				+ Str(u"}\n");
 		}
 		virtual ASTId id()const override {
@@ -113,7 +114,7 @@ namespace cym {
 			return Str(u"Call Function{\n")
 				+ Str(u"name = \"") + name + Str(u"\"\n")
 				+ Str(u"args = ") + temp + Str(u"\n")
-				+ Str(u"}\n");
+				+ Str(u"}");
 		}
 		virtual ASTId id()const override {
 			return ASTId::CALL_FUNC;
@@ -148,7 +149,7 @@ namespace cym {
 				+ Str(u"name = \"") + Str(name) + Str(u"\"\n")
 				+ Str(u"left = ") + (l ? l->toStr() : Str(u"Error:null")) + Str(u"\n")
 				+ Str(u"right = ") + (r ? r->toStr() : Str(u"Error:null")) + Str(u"\n")
-				+ Str(u"}\n");
+				+ Str(u"}");
 		}
 		virtual ASTId id()const override {
 			return ASTId::INFIX;
