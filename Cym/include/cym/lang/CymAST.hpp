@@ -192,7 +192,7 @@ namespace cym {
 		FUNC_SCOPE,
 		CLASS_SCOPE
 	};
-	using Scope = std::variant<
+	using Scope = Variant<
 		FuncDef*,
 		ClassDef*
 	>;

@@ -23,7 +23,7 @@ namespace cym {
 		using ObjectType = Map<Str, std::unique_ptr<Tree>>;
 		using ArrayType = std::vector<std::unique_ptr<Tree>>;
 		using AllTypeVariant =
-			std::variant <
+			Variant <
 			Str,
 			Int,
 			double,

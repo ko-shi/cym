@@ -3,12 +3,12 @@
 
 #include<cym/lang/CymIntermediateCodeGenerator.hpp>
 #include<cym/utils/CymTree.hpp>
-
+/*
 namespace cym {
 	struct IntTag {};
 	
 	struct TypeTag {
-		using TypeInfo = std::variant<
+		using TypeInfo = Variant<
 			IntTag,
 			Vector<TypeTag*>, // クラスの時、メンバー変数の型
 			TypeTag* // 配列の時、配列の型
@@ -65,6 +65,6 @@ namespace cym {
 
 	};
 }
-
+*/
 
 #endif

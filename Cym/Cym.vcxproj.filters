@@ -83,9 +83,6 @@
     <ClInclude Include="include\cym\vm\CymVM.hpp">
       <Filter>headers\vm</Filter>
     </ClInclude>
-    <ClInclude Include="include\cym\lang\CymRestriction.hpp">
-      <Filter>headers\lang</Filter>
-    </ClInclude>
     <ClInclude Include="include\cym\parser\CymParser.hpp">
       <Filter>headers\parser</Filter>
     </ClInclude>
@@ -104,12 +101,12 @@
     <ClInclude Include="include\cym\lang\CymErrorMessage.hpp">
       <Filter>headers\lang</Filter>
     </ClInclude>
+    <ClInclude Include="include\cym\vm\CymOpcode.hpp">
+      <Filter>headers\vm</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="test.cym">
-      <Filter>headers</Filter>
-    </None>
-    <None Include="infix-operators.cymi">
       <Filter>headers</Filter>
     </None>
   </ItemGroup>

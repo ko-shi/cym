@@ -30,7 +30,7 @@ namespace cym {
 	};
 
 	struct Trait {
-		using T = std::variant<Specific, SubType, FuncTrait>;
+		using T = Variant<Specific, SubType, FuncTrait>;
 		T trait;
 	};
 }

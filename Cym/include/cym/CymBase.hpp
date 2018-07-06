@@ -7,6 +7,7 @@
 #include<string_view>
 #include<memory>
 #include<utility>
+#include<variant>
 #include<tuple>
 #include<sstream>
 
@@ -23,6 +24,8 @@ namespace cym {
 	using Str = std::u16string;
 	using StrView = std::u16string_view;
 	using Char = char16_t;
+	template<class ...T>
+	using Variant = std::variant<T...>;
 	using Stream = std::basic_stringstream<char16_t>;
 
 	enum class TokenKind {

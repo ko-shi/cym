@@ -118,22 +118,22 @@ namespace cym {
 		toDouble(str, d);
 		return d;
 	}
-	Pair<std::variant<double, Int>,StrView> getNumKind(StrView str,TokenKind &kind) {
+	Pair<Variant<double, Int>,StrView> getNumKind(StrView str,TokenKind &kind) {
 		double result;
 		Int result_if_int;
 		const auto try_double = toDouble(str,result,&result_if_int);
 		if (!try_double.first) {
 			if (try_double.second.empty()) {
 				kind = TokenKind::ERROR;
-				return makePair(std::variant<double, Int>(0.),StrView());
+				return makePair(Variant<double, Int>(0.),StrView());
 			}
 			else {
 				kind = TokenKind::NUMBER;
-				return makePair(std::variant<double, Int>(result_if_int), try_double.second);
+				return makePair(Variant<double, Int>(result_if_int), try_double.second);
 			}
 		}
 		kind = TokenKind::DECIMAL;
-		return makePair(std::variant<double, Int>(result),try_double.second);
+		return makePair(Variant<double, Int>(result),try_double.second);
 	}
 
 }

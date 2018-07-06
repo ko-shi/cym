@@ -18,7 +18,7 @@
 
 namespace cym {
 	Pair<bool, StrView> toDouble(StrView, double &, Int * = nullptr);
-	Pair<std::variant<double,Int>, StrView> getNumKind(StrView, TokenKind &);
+	Pair<Variant<double,Int>, StrView> getNumKind(StrView, TokenKind &);
 
 	template<class F>
 	StrView takeWhile(const StrView &str, F &&f) {
