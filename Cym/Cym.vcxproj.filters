@@ -56,9 +56,6 @@
     <ClInclude Include="include\cym\utils\CymTree.hpp">
       <Filter>headers\utils</Filter>
     </ClInclude>
-    <ClInclude Include="include\cym\utils\CymVector.hpp">
-      <Filter>headers\utils</Filter>
-    </ClInclude>
     <ClInclude Include="include\cym\utils\string\CymMultiByteChar.hpp">
       <Filter>headers\utils\string</Filter>
     </ClInclude>
@@ -103,6 +100,12 @@
     </ClInclude>
     <ClInclude Include="include\cym\vm\CymOpcode.hpp">
       <Filter>headers\vm</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cym\vm\CymUnits.hpp">
+      <Filter>headers\vm</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cym\utils\CymTCVector.hpp">
+      <Filter>headers\utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

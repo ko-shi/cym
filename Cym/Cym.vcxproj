@@ -38,12 +38,13 @@
     <ClInclude Include="include\cym\utils\CymStack.hpp" />
     <ClInclude Include="include\cym\utils\CymTCPair.hpp" />
     <ClInclude Include="include\cym\utils\CymTree.hpp" />
-    <ClInclude Include="include\cym\utils\CymVector.hpp" />
+    <ClInclude Include="include\cym\utils\CymTCVector.hpp" />
     <ClInclude Include="include\cym\utils\string\CymMultiByteChar.hpp" />
     <ClInclude Include="include\cym\utils\string\CymShiftJisString.hpp" />
     <ClInclude Include="include\cym\utils\string\CymStringConverter.hpp" />
     <ClInclude Include="include\cym\utils\string\CymU8String.hpp" />
     <ClInclude Include="include\cym\vm\CymOpcode.hpp" />
+    <ClInclude Include="include\cym\vm\CymUnits.hpp" />
     <ClInclude Include="include\cym\vm\CymVM.hpp" />
   </ItemGroup>
   <ItemGroup>
