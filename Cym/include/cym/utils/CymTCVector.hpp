@@ -8,7 +8,7 @@
 
 namespace cym {
 	template<class T, class Allocator = std::allocator<T>, bool B = std::is_trivially_copyable_v<T>>
-	class Vector {
+	class TCVector {
 	public:
 		using iterator = T*;
 	private:
@@ -19,27 +19,27 @@ namespace cym {
 		Size capacity_;
 		T* ptr_;
 	public:
-		Vector() : allocator_(), size_(0), capacity_(0), ptr_(nullptr) {
+		TCVector() : allocator_(), size_(0), capacity_(0), ptr_(nullptr) {
 
 		}
-		Vector(const Vector<T> &v) : allocator_(), size_(v.size_), capacity_(0), ptr_(nullptr) {
+		TCVector(const TCVector<T> &v) : allocator_(), size_(v.size_), capacity_(0), ptr_(nullptr) {
 			reserve(v.capacity_); 
 			std::memcpy(ptr_, v.ptr_, sizeof(T) * v.size_);
 		}
-		Vector(Vector<T> &&v) noexcept: allocator_(), size_(v.size_), capacity_(v.capacity_), ptr_(v.ptr_) {
+		TCVector(TCVector<T> &&v) noexcept: allocator_(), size_(v.size_), capacity_(v.capacity_), ptr_(v.ptr_) {
 			v.ptr_ = nullptr;
 			
 		}
-		Vector(Size capacity) : allocator_(), size_(0), capacity_(0), ptr_(nullptr) {
+		TCVector(Size capacity) : allocator_(), size_(0), capacity_(0), ptr_(nullptr) {
 			reserve(capacity);
 		}
-		Vector(std::initializer_list<T> init) : allocator_(), size_(0), capacity_(0), ptr_(nullptr) {
+		TCVector(std::initializer_list<T> init) : allocator_(), size_(0), capacity_(0), ptr_(nullptr) {
 			reserve(init.size());
 			for (const auto &i : init) {
 				pushBack(i);
 			}
 		}
-		Vector<T>& operator=(const Vector<T> &v) {
+		TCVector<T>& operator=(const TCVector<T> &v) {
 			if (ptr_) {
 				allocator_.deallocate(ptr_, capacity_);
 				capacity_ = 0;
@@ -49,7 +49,7 @@ namespace cym {
 			std::memcpy(ptr_, v.ptr_, sizeof(T) * v.size_);
 			return *this;
 		}
-		Vector<T>& operator=(Vector<T> &&v) noexcept{
+		TCVector<T>& operator=(TCVector<T> &&v) noexcept{
 			size_ = v.size_;
 			capacity_ = v.capacity_;
 			ptr_ = v.ptr_;
@@ -63,7 +63,7 @@ namespace cym {
 			std::allocator_traits<Allocator>::construct(allocator_, ptr_ + size_, val);
 			return size_++, 0;
 		}
-		int pushBack(const Vector<T> &val) {
+		int pushBack(const TCVector<T> &val) {
 			if (size_ + val.size_ > capacity_) {
 				reserve((size_ + val.size_) * 2 + 1);
 			}
@@ -120,7 +120,7 @@ namespace cym {
 			ptr_[pos] = data;
 			size_++;
 		}
-		void insert(Size pos, const Vector<T> &data) {
+		void insert(Size pos, const TCVector<T> &data) {
 			if (capacity_ < size_ + data.size()) {
 				reserve(size_ + data.size());
 			}
@@ -201,11 +201,11 @@ namespace cym {
 		const T* data() const{
 			return ptr_;
 		}
-		bool operator==(const Vector<T> &right) const{
+		bool operator==(const TCVector<T> &right) const{
 			return size_ != right.size_ ? false : std::memcmp(ptr_, right.ptr_, size_) == 0;
 		}
-		void swap(Vector<T> &r) noexcept {
-			constexpr auto s = sizeof(Vector<T>);
+		void swap(TCVector<T> &r) noexcept {
+			constexpr auto s = sizeof(TCVector<T>);
 			std::uint8_t buf[s];
 			std::memcpy(buf, this, s);
 			std::memcpy(this, &r, s);
@@ -222,7 +222,7 @@ namespace cym {
 			}
 			return str;
 		}
-		~Vector() {
+		~TCVector() {
 			if (ptr_) {
 				allocator_.deallocate(ptr_, capacity_);
 			}
@@ -230,26 +230,26 @@ namespace cym {
 	};
 
 	template<class T,class Y>
-	class Vector<T,Y,false> : public std::vector<T>{
+	class TCVector<T,Y,false> : public std::vector<T>{
 	public:
 		using Base = std::vector<T>;
 	public:
-		Vector() : Base() {
+		TCVector() : Base() {
 
 		}
-		Vector(Vector &&v) : Base(std::forward<Vector>(v)) {
+		TCVector(TCVector &&v) : Base(std::forward<TCVector>(v)) {
 
 		}
-		Vector(const Vector &v) : Base(v) {
+		TCVector(const TCVector &v) : Base(v) {
 
 		}
-		Vector(std::initializer_list<T> &&init) : Base(init) {
+		TCVector(std::initializer_list<T> &&init) : Base(init) {
 
 		}
-		decltype(auto) operator=(const Vector &v) {
+		decltype(auto) operator=(const TCVector &v) {
 			return Base::operator=(v);
 		}
-		decltype(auto) operator=(Vector &&v) {
+		decltype(auto) operator=(TCVector &&v) {
 			return Base::operator=(v);
 		}
 		int pushBack(const T &val) {
@@ -275,18 +275,18 @@ namespace cym {
 		}
 	};
 	template<class T>
-	inline void swap(Vector<T> &l, Vector<T> &r) noexcept {
-		Vector<T> temp(std::move(l));
+	inline void swap(TCVector<T> &l, TCVector<T> &r) noexcept {
+		TCVector<T> temp(std::move(l));
 		r = std::move(temp);
 		l = std::move(r);
 	}
 	template<class T>
-	using StdVector = Vector<T, std::allocator<T>, false>;
+	using StdTCVector = TCVector<T, std::allocator<T>, false>;
 }
 namespace std {
 	template<class T>
-	struct hash<cym::Vector<T>> {
-		size_t operator()(const cym::Vector<T> &vec) const {
+	struct hash<cym::TCVector<T>> {
+		size_t operator()(const cym::TCVector<T> &vec) const {
 			return hash<T*>()(vec.data());
 		}
 	};

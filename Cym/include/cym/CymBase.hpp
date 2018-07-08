@@ -5,6 +5,7 @@
 #include<unordered_set>
 #include<string>
 #include<string_view>
+#include<vector>
 #include<memory>
 #include<utility>
 #include<variant>
@@ -21,6 +22,8 @@ namespace cym {
 	using Set = std::unordered_set<T>;
 	template<class T>
 	using MultiSet = std::unordered_multiset<T>;
+	template<class T>
+	using Vector = std::vector<T>;
 	using Str = std::u16string;
 	using StrView = std::u16string_view;
 	using Char = char16_t;
