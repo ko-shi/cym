@@ -28,10 +28,10 @@ namespace cym {
 			const auto &main = code_[0];
 			stack_.emplace_back(main.size, &main_return);
 			auto itr = main.com.begin();
-			bool is_prim = false;
 			while (114514) {
 				const auto com = *itr;
 				auto &func = stack_.back();
+				const bool is_prim = func.iprim != IfPrimitive::USER;
 				switch (static_cast<OpCode>(com.index()))
 				{
 				case OpCode::ASSIGN:
@@ -45,11 +45,23 @@ namespace cym {
 						func.registers.emplace_back(com.as<OpCode::PUSHVALUE>().val);
 					}
 					break;
+				case OpCode::PUSHPRECALL: {
+					const auto opland = com.as<OpCode::PUSHPRECALL>();
+					func.registers.emplace_back();
+					stack_.emplace_back(opland.func, opland.func->size, &func.registers.back().data);
+					break;
+				}
+				case OpCode::PRECALL: {
+					const auto opland = com.as<OpCode::PRECALL>();
+					stack_.emplace_back(opland.func, opland.func->size, opland.caller);
+					break;
+				}
 				case OpCode::CALL:
 					if (func.iprim != IfPrimitive::USER) {
 						switch (func.iprim) {
 						case IfPrimitive::ASSIGN:
-							
+							*func.caller = func.primreg.registers[0];
+							break;
 						}
 					}
 					else {
@@ -57,6 +69,16 @@ namespace cym {
 						itr = func.byte_code->com.begin();
 					}
 					break;
+				case OpCode::RETURNVALUE:
+					*func.caller = com.as<OpCode::RETURNVALUE>().val;
+					stack_.pop_back();
+					break;
+				case OpCode::RETURNOBJECT:
+					const auto data = func.caller->data.obj;
+					// TODO
+					break;
+				case OpCode::RETURNFUNC:
+
 				default:
 					return ;
 				}

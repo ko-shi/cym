@@ -11,8 +11,13 @@ namespace cym {
 			void* ptr;
 			Size size;
 		};
+		struct Object {
+			void* ptr;
+			Size size;
+		};
 		union U {
 			Array arr;
+			Object obj;
 			bool b;
 			Int i;
 			Uint u;

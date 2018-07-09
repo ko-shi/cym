@@ -9,18 +9,6 @@ namespace cym {
 
 	struct ByteCodeFunc;
 
-	enum class OpCode {
-		ASSIGN,
-		PLUS,
-		PRECALL,
-		PUSHVALUE,
-		PUSHPRECALL,
-		PUSHVALUETHENCALL,
-		PUSHPRECALLTHENCALL,
-		CALL,
-		ENDOFFUNC,
-		TERMINATE
-	};
 
 	// Calcrating // // Kind like PreCall
 	struct OpAssign {// need 1 push
@@ -32,9 +20,11 @@ namespace cym {
 
 	// VM operating //
 
+
 	// PreCall function
 	struct OpPreCall {
 		ByteCodeFunc *func;
+		VariableUnit* caller;
 	};
 
 	// Push
@@ -57,16 +47,51 @@ namespace cym {
 		
 	};
 
-	// End of function
-	struct OpEndOfFunc {
-
+	// Return, end of function
+	struct OpReturnValue {
+		VariableUnit val;
 	};
+	struct OpReturnObject {
+		VariableUnit::Object obj;
+	};
+	// Kind like a precall, caller is func.caller
+	struct OpReturnFunc {
+		ByteCodeFunc* func;
+	};
+
 	// Terminate
 	struct OpTerminate {
 
 	};
 
-	struct OpUnion : Variant<OpAssign, OpPlus, OpPreCall, OpPushValue, OpPushPreCall, OpPushValueThenCall, OpPushPreCallThenCall, OpCall, OpEndOfFunc, OpTerminate> {
+	enum class OpCode {
+		ASSIGN,
+		PLUS,
+		PRECALL,
+		PUSHVALUE,
+		PUSHPRECALL,
+		PUSHVALUETHENCALL,
+		PUSHPRECALLTHENCALL,
+		CALL,
+		RETURNVALUE,
+		RETURNOBJECT,
+		RETURNFUNC,
+		TERMINATE
+	};
+
+	struct OpUnion : Variant<
+		OpAssign,
+		OpPlus,
+		OpPreCall,
+		OpPushValue,
+		OpPushPreCall,
+		OpPushValueThenCall,
+		OpPushPreCallThenCall, 
+		OpCall,
+		OpReturnValue,
+		OpReturnObject,
+		OpReturnFunc, 
+		OpTerminate> {
 		template<OpCode C>
 		auto as() const {
 			return std::get<static_cast<Size>(C)>(*this);
@@ -79,7 +104,7 @@ namespace cym {
 	};
 
 	constexpr auto s = sizeof(OpUnion);
-	constexpr auto s2 = sizeof(OpAssign);
+	constexpr auto s2 = sizeof(OpPushValue);
 }
 
 #endif
