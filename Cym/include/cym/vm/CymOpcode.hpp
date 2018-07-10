@@ -58,6 +58,9 @@ namespace cym {
 	struct OpReturnFunc {
 		ByteCodeFunc* func;
 	};
+	struct OpEndOfReturnFunc {
+
+	};
 
 	// Terminate
 	struct OpTerminate {
@@ -76,6 +79,7 @@ namespace cym {
 		RETURNVALUE,
 		RETURNOBJECT,
 		RETURNFUNC,
+		ENDOFRETURNFUNC,
 		TERMINATE
 	};
 
@@ -91,7 +95,9 @@ namespace cym {
 		OpReturnValue,
 		OpReturnObject,
 		OpReturnFunc, 
-		OpTerminate> {
+		OpEndOfReturnFunc,
+		OpTerminate
+	> {
 		template<OpCode C>
 		auto as() const {
 			return std::get<static_cast<Size>(C)>(*this);

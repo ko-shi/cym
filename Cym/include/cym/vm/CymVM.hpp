@@ -57,7 +57,7 @@ namespace cym {
 					break;
 				}
 				case OpCode::CALL:
-					if (func.iprim != IfPrimitive::USER) {
+					if (is_prim) {
 						switch (func.iprim) {
 						case IfPrimitive::ASSIGN:
 							*func.caller = func.primreg.registers[0];
@@ -77,8 +77,14 @@ namespace cym {
 					const auto data = func.caller->data.obj;
 					// TODO
 					break;
-				case OpCode::RETURNFUNC:
-
+				case OpCode::RETURNFUNC: {
+					const auto opland = com.as<OpCode::RETURNFUNC>();
+					stack_.emplace_back(opland.func, opland.func->size, func.caller);
+					break;
+				}
+				case OpCode::ENDOFRETURNFUNC:
+					stack_.pop_back();
+					break;
 				default:
 					return ;
 				}
