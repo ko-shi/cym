@@ -3,7 +3,7 @@
 
 #include<limits>
 #include<cym/CymBase.hpp>
-#include<cym/utils/CymVector.hpp>
+#include<cym/utils/CymTCVector.hpp>
 #include<cym/utils/CymTCPair.hpp>
 #include<cym/parser/CymLexer.hpp>
 
@@ -22,7 +22,7 @@ namespace cym {
 
 		using Limit = std::numeric_limits<Uint>;
 
-		const auto conv = [](const Vector<std::int8_t> &buf) {
+		const auto conv = [](const TCVector<std::int8_t> &buf) {
 			Uint res = 0;
 			for (auto i : buf) {
 				res *= 10;
@@ -35,7 +35,7 @@ namespace cym {
 			return makePair(false, StrView());
 		}
 
-		Vector<std::int8_t> buf(Limit::digits10);
+		TCVector<std::int8_t> buf(Limit::digits10);
 		for (auto i : str) {
 			if (u'0' <= i && i <= u'9') {
 				buf.pushBack(std::int8_t(i - u'0'));

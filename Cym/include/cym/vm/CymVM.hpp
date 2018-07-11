@@ -12,7 +12,7 @@ namespace cym {
 
 
 	class CymVM {
-
+	public:
 		Vector<FunctionUnit> stack_;
 		const ByteCode code_;
 
@@ -26,17 +26,19 @@ namespace cym {
 
 			VariableUnit main_return;
 			const auto &main = code_[0];
-			stack_.emplace_back(main.size, &main_return);
+			stack_.emplace_back(&main,main.size, &main_return);
 			auto itr = main.com.begin();
 			while (114514) {
 				const auto com = *itr;
 				auto &func = stack_.back();
-				const bool is_prim = func.iprim != IfPrimitive::USER;
+				const bool is_prim = func.binop != IFBinOp::USER;
 				switch (static_cast<OpCode>(com.index()))
 				{
-				case OpCode::ASSIGN:
-					stack_.emplace_back(IfPrimitive::ASSIGN, com.as<OpCode::ASSIGN>().dest);
+				case OpCode::BINARYOP: {
+					const auto opland = com.as<OpCode::BINARYOP>();
+					stack_.emplace_back(opland.op, &func.registers[opland.num]);
 					break;
+				}
 				case OpCode::PUSHVALUE:
 					if (is_prim) {
 						func.primreg.push(com.as<OpCode::PUSHVALUE>().val);
@@ -48,19 +50,23 @@ namespace cym {
 				case OpCode::PUSHPRECALL: {
 					const auto opland = com.as<OpCode::PUSHPRECALL>();
 					func.registers.emplace_back();
-					stack_.emplace_back(opland.func, opland.func->size, &func.registers.back().data);
+					stack_.emplace_back(opland.func, opland.func->size, &func.registers.back());
 					break;
 				}
 				case OpCode::PRECALL: {
 					const auto opland = com.as<OpCode::PRECALL>();
-					stack_.emplace_back(opland.func, opland.func->size, opland.caller);
+					stack_.emplace_back(opland.func, opland.func->size, &func.registers[opland.num]);
 					break;
 				}
 				case OpCode::CALL:
 					if (is_prim) {
-						switch (func.iprim) {
-						case IfPrimitive::ASSIGN:
-							*func.caller = func.primreg.registers[0];
+						const auto regs = func.primreg.registers;
+						switch (func.binop) {
+						case IFBinOp::ASSIGN:
+							*func.caller = regs[0];
+							break;
+						case IFBinOp::PLUS:
+							func.caller->data.i = regs[0].data.i + regs[1].data.i;
 							break;
 						}
 					}
@@ -70,7 +76,9 @@ namespace cym {
 					}
 					break;
 				case OpCode::RETURNVALUE:
-					*func.caller = com.as<OpCode::RETURNVALUE>().val;
+					if (func.caller) {
+						*func.caller = com.as<OpCode::RETURNVALUE>().val;
+					}
 					stack_.pop_back();
 					break;
 				case OpCode::RETURNOBJECT:

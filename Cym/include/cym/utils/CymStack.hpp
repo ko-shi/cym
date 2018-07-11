@@ -2,11 +2,11 @@
 #define CYM_STACK_HPP
 
 
-#include<cym/utils/CymVector.hpp>
+#include<cym/utils/CymTCVector.hpp>
 
 namespace cym {
 
-	template<class T,class Container = Vector<T>>
+	template<class T,class Container = TCVector<T>>
 	class Stack{
 	private:
 		using Size = std::size_t;

@@ -33,7 +33,7 @@ namespace cym {
 		return str.substr(0, index);
 	}
 	StrView getBlock(const StrView &str) {
-		const auto brackets = Vector<Pair<Char, Char>>{ { u'(',u')' },{ u'[',u']' },{ u'<',u'>' },{ u'{',u'}' } };
+		const auto brackets = TCVector<Pair<Char, Char>>{ { u'(',u')' },{ u'[',u']' },{ u'<',u'>' },{ u'{',u'}' } };
 		Stack<Char> stack;
 		Size index = 0;
 		if (str.empty())return str;
@@ -170,8 +170,8 @@ namespace cym {
 		return Str(name_part) + args_replaced + toFuncName(next);
 	}
 	// This function's arg must be deleted the initial spaces.
-	Vector<StrView> listArgs(const StrView &func) {
-		const auto specials = Vector<Char>{
+	TCVector<StrView> listArgs(const StrView &func) {
+		const auto specials = TCVector<Char>{
 			u'(' ,u'[' ,u'{' ,u'"',u'<',
 			u'+' ,u'-' ,u'*' ,u'/' ,
 			u'.',
@@ -181,10 +181,10 @@ namespace cym {
 		const auto name_part = takeWhileName(func);
 		const auto bracket_part = getBlock(getRemainedStr(func, name_part));
 		if (bracket_part.empty() || bracket_part[0] != u'(') {
-			return Vector<StrView>{};
+			return TCVector<StrView>{};
 		}
 		const auto bracket_content = bracketContent(bracket_part);
-		Vector<StrView> list;
+		TCVector<StrView> list;
 		for (StrView expr = takeExpression(bracket_content); !expr.empty();
 			expr = takeExpression(getRemainedStr(bracket_content,expandTail(bracket_content,expr,1)))) {
 			list.emplaceBack(expr);

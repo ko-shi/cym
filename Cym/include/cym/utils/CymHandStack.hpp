@@ -2,7 +2,7 @@
 #define CYM_HAND_STACK_HPP
 
 
-#include<cym/utils/CymVector.hpp>
+#include<cym/utils/CymTCVector.hpp>
 
 namespace cym {
 
@@ -17,7 +17,7 @@ namespace cym {
 		using DataSetType = DataSet<AdT>;
 
 
-		Vector<std::uint8_t> buffer_;
+		TCVector<std::uint8_t> buffer_;
 	public:
 		HandStack(Size size = 16) : buffer_(size){
 			

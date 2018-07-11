@@ -23,10 +23,18 @@ namespace cym {
 			Uint u;
 			double d;
 		} data;
+		VariableUnit() {
+
+		}
+		template<class T>
+		VariableUnit(T v){
+			data.d = *static_cast<double*>(static_cast<void*>(&v));
+		}
 	};
-	enum class IfPrimitive{
+	enum class IFBinOp{
 		USER,
 		ASSIGN,// following are primitive
+		PLUS
 	};
 	struct PrimitiveFunctionRegister {// singleton
 		VariableUnit registers[2];
@@ -41,8 +49,8 @@ namespace cym {
 		}
 	};
 	struct FunctionUnit {
-		IfPrimitive iprim;
-		ByteCodeFunc *byte_code;
+		IFBinOp binop;
+		const ByteCodeFunc *byte_code;
 		Vector<VariableUnit> registers;
 		PrimitiveFunctionRegister primreg;
 
@@ -54,10 +62,10 @@ namespace cym {
 
 
 		Vector<OpUnion>::const_iterator itr;
-		FunctionUnit(ByteCodeFunc *b, Size s, VariableUnit *c) : iprim(IfPrimitive::USER), byte_code(b), registers(s), caller(c) {
+		FunctionUnit(const ByteCodeFunc *b, Size s, VariableUnit *c) : binop(IFBinOp::USER), byte_code(b), registers(s), caller(c) {
 
 		}
-		FunctionUnit(IfPrimitive i, VariableUnit *c) : iprim(i), caller(c) {
+		FunctionUnit(IFBinOp i, VariableUnit *c) : binop(i), caller(c) {
 
 		}
 	};

@@ -2,7 +2,6 @@
 #define CYM_RESTRICTION_HPP
 
 #include<cym/CymBase.hpp>
-#include<cym/utils/CymVector.hpp>
 #include<variant>
 #include<utility>
 
@@ -20,13 +19,13 @@ namespace cym {
 	};
 
 	struct SubType {
-		StdVector<Trait> req;
+		Vector<Trait> req;
 	};
 
 	struct FuncTrait {
 		StrView name;
 		std::unique_ptr<Trait> ret;
-		StdVector<Trait> args;
+		Vector<Trait> args;
 	};
 
 	struct Trait {

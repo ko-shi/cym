@@ -11,11 +11,9 @@ namespace cym {
 
 
 	// Calcrating // // Kind like PreCall
-	struct OpAssign {// need 1 push
-		VariableUnit* dest;
-	};
-	struct OpPlus {// need 2 push
-		VariableUnit* dest;
+	struct OpBinaryOp {
+		IFBinOp op;
+		Uint num;
 	};
 
 	// VM operating //
@@ -24,7 +22,7 @@ namespace cym {
 	// PreCall function
 	struct OpPreCall {
 		ByteCodeFunc *func;
-		VariableUnit* caller;
+		Uint num;
 	};
 
 	// Push
@@ -68,8 +66,7 @@ namespace cym {
 	};
 
 	enum class OpCode {
-		ASSIGN,
-		PLUS,
+		BINARYOP,
 		PRECALL,
 		PUSHVALUE,
 		PUSHPRECALL,
@@ -83,21 +80,25 @@ namespace cym {
 		TERMINATE
 	};
 
-	struct OpUnion : Variant<
-		OpAssign,
-		OpPlus,
+	using OpBase = Variant<
+		OpBinaryOp,
 		OpPreCall,
 		OpPushValue,
 		OpPushPreCall,
 		OpPushValueThenCall,
-		OpPushPreCallThenCall, 
+		OpPushPreCallThenCall,
 		OpCall,
 		OpReturnValue,
 		OpReturnObject,
-		OpReturnFunc, 
+		OpReturnFunc,
 		OpEndOfReturnFunc,
 		OpTerminate
-	> {
+	>;
+	struct OpUnion : OpBase{
+		template<class T>
+		OpUnion(T &&arg) : OpBase(std::forward<T>(arg)) {
+
+		}
 		template<OpCode C>
 		auto as() const {
 			return std::get<static_cast<Size>(C)>(*this);

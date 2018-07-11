@@ -3,7 +3,7 @@
 
 
 #include<cym/CymBase.hpp>
-#include<cym/utils/CymVector.hpp>
+#include<cym/utils/CymTCVector.hpp>
 #include<cym/lang/CymAST.hpp>
 #include<cym/parser/CymLexer.hpp>
 #include<cym/utils/CymNumConverter.hpp>
@@ -24,7 +24,7 @@ namespace cym {
 		FuncDef ast_;
 	public:
 		Parser() : ast_{ u"main"} {
-			scope_.emplaceBack(&ast_);
+			scope_.emplace_back(&ast_);
 		}
 		void addCode(const Str &code) {
 			const auto head = removeSpace(code);

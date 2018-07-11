@@ -2,7 +2,6 @@
 #define CYM_AST_HPP
 
 #include<cym/CymBase.hpp>
-#include<cym/utils/CymVector.hpp>
 #include<cym/utils/CymTCPair.hpp>
 #include<cym/lang/CymTrait.hpp>
 #include<cym/utils/CymForwardIndexMap.hpp>
