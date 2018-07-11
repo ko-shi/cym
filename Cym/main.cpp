@@ -13,8 +13,9 @@ int main() {
 	ByteCode byte_code = { ByteCodeFunc{{
 			OpUnion(OpBinaryOp{IFBinOp::ASSIGN,0}),
 			OpUnion(OpPushValue{VariableUnit(Int(20))}),
-			OpUnion(OpCall{})
-		}} };
+			OpUnion(OpCall{}),
+			OpUnion(OpTerminate{})
+		},1} };
 	CymVM vm(std::move(byte_code));
 	vm.run();
 	return 0;
