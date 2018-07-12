@@ -45,6 +45,7 @@ namespace cym {
 			}
 			else {
 				registers[0] = v;
+				which++;
 			}
 		}
 	};

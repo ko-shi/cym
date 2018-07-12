@@ -49,8 +49,27 @@ namespace cym {
 					break;
 				case OpCode::PUSHPRECALL: {
 					const auto opland = com.as<OpCode::PUSHPRECALL>();
-					func.registers.emplace_back();
-					stack_.emplace_back(opland.func, opland.func->size, &func.registers.back());
+					if (is_prim) {
+						func.primreg.push(VariableUnit{});
+						stack_.emplace_back(opland.func, opland.func->size, &func.primreg.registers[func.primreg.which]);
+					}
+					else {
+						func.registers.emplace_back();
+						stack_.emplace_back(opland.func, opland.func->size, &func.registers.back());
+					}
+					break;
+				}
+				case OpCode::PUSHVARIABLE: {
+					const auto opland = com.as<OpCode::PUSHVARIABLE>();
+					if (is_prim) {
+						if (stack_.size() > 1) {
+							func.primreg.push(stack_[stack_.size() - 2].registers[opland.num]);
+						}
+
+					}
+					else {
+						func.registers.emplace_back(func.registers[opland.num]);
+					}
 					break;
 				}
 				case OpCode::PRECALL: {
@@ -74,6 +93,7 @@ namespace cym {
 						func.itr = itr;
 						itr = func.byte_code->com.begin();
 					}
+					stack_.pop_back();
 					break;
 				case OpCode::RETURNVALUE:
 					if (func.caller) {
@@ -96,6 +116,7 @@ namespace cym {
 				default:
 					return ;
 				}
+				itr++;
 			}
 		}
 	};

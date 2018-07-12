@@ -14,8 +14,12 @@ int main() {
 			OpUnion(OpBinaryOp{IFBinOp::ASSIGN,0}),
 			OpUnion(OpPushValue{VariableUnit(Int(20))}),
 			OpUnion(OpCall{}),
+			OpUnion(OpBinaryOp{IFBinOp::PLUS,1}),
+			OpUnion(OpPushVariable{0}),
+			OpUnion(OpPushValue{VariableUnit(Int(40))}),
+			OpUnion(OpCall{}),
 			OpUnion(OpTerminate{})
-		},1} };
+		},2} };
 	CymVM vm(std::move(byte_code));
 	vm.run();
 	return 0;

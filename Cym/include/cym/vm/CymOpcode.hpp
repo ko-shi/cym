@@ -32,6 +32,9 @@ namespace cym {
 	struct OpPushPreCall {
 		ByteCodeFunc *func;
 	};
+	struct OpPushVariable {
+		Size num;
+	};
 	// Push then call
 	struct OpPushValueThenCall {
 		VariableUnit val;
@@ -70,6 +73,7 @@ namespace cym {
 		PRECALL,
 		PUSHVALUE,
 		PUSHPRECALL,
+		PUSHVARIABLE,
 		PUSHVALUETHENCALL,
 		PUSHPRECALLTHENCALL,
 		CALL,
@@ -85,6 +89,7 @@ namespace cym {
 		OpPreCall,
 		OpPushValue,
 		OpPushPreCall,
+		OpPushVariable,
 		OpPushValueThenCall,
 		OpPushPreCallThenCall,
 		OpCall,
