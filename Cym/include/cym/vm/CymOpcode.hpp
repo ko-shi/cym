@@ -13,7 +13,7 @@ namespace cym {
 	// Calcrating // // Kind like PreCall
 	struct OpBinaryOp {
 		IFBinOp op;
-		Uint num;
+		Uint num;// dest
 	};
 
 	// VM operating //
@@ -21,7 +21,7 @@ namespace cym {
 
 	// PreCall function
 	struct OpPreCall {
-		ByteCodeFunc *func;
+		Size func;
 		Uint num;
 	};
 
@@ -30,7 +30,7 @@ namespace cym {
 		VariableUnit val;
 	};
 	struct OpPushPreCall {
-		ByteCodeFunc *func;
+		Size func;
 	};
 	struct OpPushVariable {
 		Size num;
@@ -40,7 +40,7 @@ namespace cym {
 		VariableUnit val;
 	};
 	struct OpPushPreCallThenCall {
-		ByteCodeFunc *func;
+		Size func;
 	};
 
 	// Call function
@@ -57,7 +57,10 @@ namespace cym {
 	};
 	// Kind like a precall, caller is func.caller
 	struct OpReturnFunc {
-		ByteCodeFunc* func;
+		Size func;
+	};
+	struct OpReturnBinaryOp {
+		IFBinOp op;
 	};
 	struct OpEndOfReturnFunc {
 
@@ -80,6 +83,7 @@ namespace cym {
 		RETURNVALUE,
 		RETURNOBJECT,
 		RETURNFUNC,
+		RETURNBINOP,
 		ENDOFRETURNFUNC,
 		TERMINATE
 	};
@@ -96,6 +100,7 @@ namespace cym {
 		OpReturnValue,
 		OpReturnObject,
 		OpReturnFunc,
+		OpReturnBinaryOp,
 		OpEndOfReturnFunc,
 		OpTerminate
 	>;

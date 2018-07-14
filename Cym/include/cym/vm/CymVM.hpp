@@ -27,9 +27,10 @@ namespace cym {
 			VariableUnit main_return;
 			const auto &main = code_[0];
 			stack_.emplace_back(&main,main.size, &main_return);
-			auto itr = main.com.begin();
+			auto itr = main.com.data();
 			while (114514) {
 				const auto com = *itr;
+				const auto opcode = static_cast<OpCode>(com.index());
 				auto &func = stack_.back();
 				const bool is_prim = func.binop != IFBinOp::USER;
 				switch (static_cast<OpCode>(com.index()))
@@ -44,37 +45,36 @@ namespace cym {
 						func.primreg.push(com.as<OpCode::PUSHVALUE>().val);
 					}
 					else {
-						func.registers.emplace_back(com.as<OpCode::PUSHVALUE>().val);
+						func.registers[func.pushed++] = com.as<OpCode::PUSHVALUE>().val;
 					}
 					break;
 				case OpCode::PUSHPRECALL: {
 					const auto opland = com.as<OpCode::PUSHPRECALL>();
 					if (is_prim) {
 						func.primreg.push(VariableUnit{});
-						stack_.emplace_back(opland.func, opland.func->size, &func.primreg.registers[func.primreg.which]);
+						stack_.emplace_back(&code_[opland.func], code_[opland.func].size, &func.primreg.registers[func.primreg.which]);
 					}
 					else {
-						func.registers.emplace_back();
-						stack_.emplace_back(opland.func, opland.func->size, &func.registers.back());
+						stack_.emplace_back(&code_[opland.func], code_[opland.func].size, &func.registers[func.pushed++]);
 					}
 					break;
 				}
 				case OpCode::PUSHVARIABLE: {
 					const auto opland = com.as<OpCode::PUSHVARIABLE>();
-					if (is_prim) {
-						if (stack_.size() > 1) {
+					if (stack_.size() > 0) {
+						if (is_prim) {
 							func.primreg.push(stack_[stack_.size() - 2].registers[opland.num]);
-						}
 
-					}
-					else {
-						func.registers.emplace_back(func.registers[opland.num]);
+						}
+						else {
+							func.registers[func.pushed++] = stack_[stack_.size() - 2].registers[opland.num];
+						}
 					}
 					break;
 				}
 				case OpCode::PRECALL: {
 					const auto opland = com.as<OpCode::PRECALL>();
-					stack_.emplace_back(opland.func, opland.func->size, &func.registers[opland.num]);
+					stack_.emplace_back(&code_[opland.func], code_[opland.func].size, &func.registers[opland.num]);
 					break;
 				}
 				case OpCode::CALL:
@@ -88,18 +88,19 @@ namespace cym {
 							func.caller->data.i = regs[0].data.i + regs[1].data.i;
 							break;
 						}
+						stack_.pop_back();
 					}
 					else {
-						func.itr = itr;
-						itr = func.byte_code->com.begin();
+						stack_[stack_.size() - 2].itr = itr;
+						itr = func.byte_code->com.data() - 1;// -1 because of incremant by loop end
 					}
-					stack_.pop_back();
 					break;
 				case OpCode::RETURNVALUE:
 					if (func.caller) {
 						*func.caller = com.as<OpCode::RETURNVALUE>().val;
 					}
 					stack_.pop_back();
+					itr = stack_.back().itr;
 					break;
 				case OpCode::RETURNOBJECT:
 					const auto data = func.caller->data.obj;
@@ -107,11 +108,17 @@ namespace cym {
 					break;
 				case OpCode::RETURNFUNC: {
 					const auto opland = com.as<OpCode::RETURNFUNC>();
-					stack_.emplace_back(opland.func, opland.func->size, func.caller);
+					stack_.emplace_back(&code_[opland.func], code_[opland.func].size, func.caller);
+					break;
+				}
+				case OpCode::RETURNBINOP: {
+					const auto opland = com.as<OpCode::RETURNBINOP>();
+					stack_.emplace_back(opland.op,func.caller);
 					break;
 				}
 				case OpCode::ENDOFRETURNFUNC:
 					stack_.pop_back();
+					itr = stack_.back().itr;// not -1 because of CALL
 					break;
 				default:
 					return ;

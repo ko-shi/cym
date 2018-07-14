@@ -53,6 +53,7 @@ namespace cym {
 		IFBinOp binop;
 		const ByteCodeFunc *byte_code;
 		Vector<VariableUnit> registers;
+		Size pushed;
 		PrimitiveFunctionRegister primreg;
 
 		// means from whre this func have called.
@@ -62,15 +63,14 @@ namespace cym {
 		VariableUnit * caller;
 
 
-		Vector<OpUnion>::const_iterator itr;
-		FunctionUnit(const ByteCodeFunc *b, Size s, VariableUnit *c) : binop(IFBinOp::USER), byte_code(b), registers(s), caller(c) {
-
+		const OpUnion *itr;
+		FunctionUnit(const ByteCodeFunc *b, Size s, VariableUnit *c) : binop(IFBinOp::USER), byte_code(b), registers(s), pushed(0), caller(c) {
 		}
 		FunctionUnit(IFBinOp i, VariableUnit *c) : binop(i), caller(c) {
 
 		}
 	};
-	constexpr auto a = sizeof(FunctionUnit::itr);
+	constexpr auto a = sizeof(FunctionUnit);
 }
 
 #endif

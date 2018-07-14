@@ -10,16 +10,25 @@ int main() {
 
 	using namespace std::string_literals;
 	using namespace cym;
-	ByteCode byte_code = { ByteCodeFunc{{
+	ByteCode byte_code = { 
+		ByteCodeFunc{{
 			OpUnion(OpBinaryOp{IFBinOp::ASSIGN,0}),
 			OpUnion(OpPushValue{VariableUnit(Int(20))}),
 			OpUnion(OpCall{}),
-			OpUnion(OpBinaryOp{IFBinOp::PLUS,1}),
+			OpUnion(OpPreCall{1,1}),
 			OpUnion(OpPushVariable{0}),
 			OpUnion(OpPushValue{VariableUnit(Int(40))}),
 			OpUnion(OpCall{}),
 			OpUnion(OpTerminate{})
-		},2} };
+		},2} ,
+		ByteCodeFunc{{
+			OpUnion(OpReturnBinaryOp{IFBinOp::PLUS}),
+			OpUnion(OpPushVariable{0}),
+			OpUnion(OpPushVariable{1}),
+			OpUnion(OpCall{}),
+			OpUnion(OpEndOfReturnFunc{})
+		},2}
+	};
 	CymVM vm(std::move(byte_code));
 	vm.run();
 	return 0;
