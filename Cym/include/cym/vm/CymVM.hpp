@@ -20,6 +20,8 @@ namespace cym {
 
 		}
 		void run() {
+			stack_ = Vector<FunctionUnit>{};
+			stack_.reserve(100);
 			if (code_.empty() || code_[0].com.empty()) {
 				return;
 			}

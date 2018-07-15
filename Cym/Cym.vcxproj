@@ -19,9 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="include\cym\Cym.hpp" />
     <ClInclude Include="include\cym\CymBase.hpp" />
     <ClInclude Include="include\cym\lang\CymAST.hpp" />
@@ -48,7 +45,11 @@
     <ClInclude Include="include\cym\vm\CymVM.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="example\test.cym" />
     <None Include="test.cym" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

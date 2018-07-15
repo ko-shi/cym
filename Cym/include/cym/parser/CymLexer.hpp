@@ -96,7 +96,7 @@ namespace cym {
 				return num_part;
 			}
 		}
-		const auto specials = {u'(',u'[',u'{',u'.',u' '};
+		const auto specials = {u'(',u'[',u'{',u'.',u' ',u':'};
 		const auto name_part = takeWhile(word, [=](Char c) {return std::none_of(specials.begin(), specials.end(), [=](Char c2){return c2 == c; });});
 		const auto sign_part = getRemainedStr(str, name_part);
 
@@ -107,11 +107,15 @@ namespace cym {
 				case u'[':
 				case u'{':
 					return getBlock(word);
-				case u'.':
+				case u'.': {
 					const auto next = takeToken(sign_part.substr(1), false);
 					if (!next.empty() && std::none_of(specials.begin() + 1, specials.end(), [=](Char c) {return c == next[0]; })) {
 						return rangeOf(sign_part, next);
 					}
+					break;
+				}
+				case u':':
+					return sign_part.substr(0, 1);
 				}
 			}
 		}

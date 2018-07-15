@@ -70,8 +70,12 @@ namespace cym {
 			auto first = takeToken(line_);
 			auto second = takeNextToken(line_, first);
 			auto third = takeNextToken(line_, second);
-			if (third == u"=") {
-				caseDefineVar(line_, first,second,third);
+			auto fourth = takeNextToken(line_, third);
+			if (second == u":" && fourth == u"=") {
+				caseDefineVar(line_, first,third,getRemainedStr(line_,fourth));
+			}
+			else if (second == u"=") {
+				caseDefineVar(line_, first, StrView(), getRemainedStr(line_, second));
 			}
 		}
 		Size priority(StrView infix) const{
@@ -80,16 +84,12 @@ namespace cym {
 			const auto temp = table.find(infix);
 			return temp == table.end() ? -1 : temp->second;
 		}
-		void caseDefineVar(StrView str,StrView first,StrView second,StrView third) {
-			auto trait = first;
-			auto name = second;
+		void caseDefineVar(StrView str,StrView name,StrView trait,StrView initializer) {
 			if (lastScope().index() != FUNC_SCOPE) {
 				error_.emplace_back(ErrorMessage::DEFINED_VARIABLE_IN_CLASS_SCOPE, line_num_, distance(str, trait), str.substr(trait.size()));
 				return;
 			}
 			auto &func = *std::get<FUNC_SCOPE>(lastScope());
-			auto equal = third;
-			const auto initializer = getRemainedStr(str,equal);
 
 			func.param_id.emplace(name);
 			ASTDefVar ast_defvar(name, trait, func.param_id[name]);
