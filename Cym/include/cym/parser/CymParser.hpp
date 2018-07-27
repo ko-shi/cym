@@ -49,6 +49,9 @@ namespace cym {
 		Scope& lastScope() {
 			return scope_.back();
 		}
+		Trait parseTrait(StrView) {
+			return Trait(RefTrait{ u"any" });
+		}
 		void parse() {
 			for (auto &&s : code_) {
 				for (Size i = 0; i < s.size(); i++) {
@@ -77,6 +80,9 @@ namespace cym {
 			else if (second == u"=") {
 				caseDefineVar(line_, first, StrView(), getRemainedStr(line_, second));
 			}
+			else if (first == u"func" && getTokenKind(second) == TokenKind::FUNC) {
+				caseDefineFunc(line_, second);
+			}
 		}
 		Size priority(StrView infix) const{
 			const Map<StrView, Size> table =
@@ -96,31 +102,30 @@ namespace cym {
 			ast_defvar.initializer = parseExpr(initializer, {});
 			func.order.emplace_back(new ASTDefVar(std::move(ast_defvar)));
 		}
-		void caseDefineFunc(StrView str,StrView head) {
-			if (lastScope().index() != FUNC_SCOPE) {
-				error_.emplace_back(ErrorMessage::DEFINED_FUNCTION_IN_CLASS_SCOPE, line_num_, distance(str, head), str.substr(head.size()));
-				return;
-			}/*
+		void caseDefineFunc(StrView str,StrView declaration) {
 			auto &func = *std::get<FUNC_SCOPE>(lastScope());
-			const auto declaration = takeNextToken(str, head);
 			const auto name = toFuncName(declaration);
 			const auto args = listArgs(declaration);
-
 
 			FuncDef new_func{};
 			new_func.name = Str(name);
 			for (const auto &arg : args) {
-				new_func.args.emplace_back()
+				const auto first = takeToken(arg);
+				const auto second = takeNextToken(arg, first);
+				const auto third = takeNextToken(arg,second);
+				if (second == u":") {
+					new_func.args.emplace_back(first,parseTrait(third));
+				}
+				else {
+					new_func.args.emplace_back(first, parseTrait(u"any"));
+				}
 			}
-
-			func.inner_func*/
+			
+			func.inner_func.emplace_back(std::move(new_func));
+			scope_.emplace_back(&func.inner_func.back());
 		}
 		std::unique_ptr<ASTBase> parseExpr(StrView expr,Vector<std::unique_ptr<ASTBase>> &&former,Size prev_priority = -1) {
 
-			if (lastScope().index() != FUNC_SCOPE) {
-				error_.emplace_back(ErrorMessage::WRITTEN_EXPRESSION_IN_CLASS_SCOPE, line_num_, distance(line_, expr), expr);
-				return std::make_unique<ASTBase>();
-			}
 			const auto token = takeToken(expr);
 			const auto kind = getTokenKind(token);
 			auto hind = getRemainedStr(expr, token);

@@ -1,7 +1,6 @@
-cls Pos
-    (var x, var y)
+func plus(a, b)
+	ret a + b
 
-    ()
-        (0,0)
+func plus(a, b)
 
-var a = Pos(0,0)
+f(x) = x * x

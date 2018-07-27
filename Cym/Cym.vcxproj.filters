@@ -105,12 +105,21 @@
     <ClInclude Include="include\cym\utils\CymTCVector.hpp">
       <Filter>headers\utils</Filter>
     </ClInclude>
+    <ClInclude Include="include\cym\lang\CymTrait.hpp">
+      <Filter>headers\lang</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cym\parser\CymCodeGen.hpp">
+      <Filter>headers\parser</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="test.cym">
       <Filter>headers</Filter>
     </None>
     <None Include="example\test.cym">
+      <Filter>examples</Filter>
+    </None>
+    <None Include="example\target.cym">
       <Filter>examples</Filter>
     </None>
   </ItemGroup>

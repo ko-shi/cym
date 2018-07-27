@@ -44,7 +44,7 @@ namespace cym {
 				}
 				case OpCode::PUSHVALUE:
 					if (is_prim) {
-						func.primreg.push(com.as<OpCode::PUSHVALUE>().val);
+						func.primreg.registers[func.pushed++] = com.as<OpCode::PUSHVALUE>().val;
 					}
 					else {
 						func.registers[func.pushed++] = com.as<OpCode::PUSHVALUE>().val;
@@ -53,8 +53,7 @@ namespace cym {
 				case OpCode::PUSHPRECALL: {
 					const auto opland = com.as<OpCode::PUSHPRECALL>();
 					if (is_prim) {
-						func.primreg.push(VariableUnit{});
-						stack_.emplace_back(&code_[opland.func], code_[opland.func].size, &func.primreg.registers[func.primreg.which]);
+						stack_.emplace_back(&code_[opland.func], code_[opland.func].size, &func.primreg.registers[func.pushed++]);
 					}
 					else {
 						stack_.emplace_back(&code_[opland.func], code_[opland.func].size, &func.registers[func.pushed++]);
@@ -64,12 +63,16 @@ namespace cym {
 				case OpCode::PUSHVARIABLE: {
 					const auto opland = com.as<OpCode::PUSHVARIABLE>();
 					if (stack_.size() > 0) {
+						const auto former = stack_[stack_.size() - 2];
+						const auto val = former.binop == IFBinOp::USER ?
+							former.registers[opland.num]
+							: former.primreg.registers[opland.num];
 						if (is_prim) {
-							func.primreg.push(stack_[stack_.size() - 2].registers[opland.num]);
+							func.primreg.registers[func.pushed++] = val;
 
 						}
 						else {
-							func.registers[func.pushed++] = stack_[stack_.size() - 2].registers[opland.num];
+							func.registers[func.pushed++] = val;
 						}
 					}
 					break;

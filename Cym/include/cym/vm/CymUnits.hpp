@@ -38,16 +38,6 @@ namespace cym {
 	};
 	struct PrimitiveFunctionRegister {// singleton
 		VariableUnit registers[2];
-		Size which = 0;
-		void push(VariableUnit v) {
-			if (which) {
-				registers[1] = v;
-			}
-			else {
-				registers[0] = v;
-				which++;
-			}
-		}
 	};
 	struct FunctionUnit {
 		IFBinOp binop;
@@ -66,7 +56,7 @@ namespace cym {
 		const OpUnion *itr;
 		FunctionUnit(const ByteCodeFunc *b, Size s, VariableUnit *c) : binop(IFBinOp::USER), byte_code(b), registers(s), pushed(0), caller(c) {
 		}
-		FunctionUnit(IFBinOp i, VariableUnit *c) : binop(i), caller(c) {
+		FunctionUnit(IFBinOp i, VariableUnit *c) : binop(i),pushed(0), caller(c) {
 
 		}
 	};

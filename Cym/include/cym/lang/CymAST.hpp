@@ -162,12 +162,12 @@ namespace cym {
 		Str name;
 		FIndexMap<StrView> param_id;
 		// bool unreferable = false;
-		Vector<Pair<Str, Trait>> args;
+		Vector<Pair<StrView, Trait>> args;
 		Trait ret_rest;
 		Vector<std::unique_ptr<ASTBase>> order;
 
-		Vector<std::unique_ptr<FuncDef>> inner_func;
-		Vector<std::unique_ptr<ClassDef>> inner_cls;
+		Vector<FuncDef> inner_func;
+		Vector<ClassDef> inner_cls;
 
 		Str toStr()const{
 			Str temp;

@@ -26,6 +26,8 @@
     <ClInclude Include="include\cym\lang\CymErrorMessage.hpp" />
     <ClInclude Include="include\cym\lang\CymInstancedType.hpp" />
     <ClInclude Include="include\cym\lang\CymIntermediateCodeGenerator.hpp" />
+    <ClInclude Include="include\cym\lang\CymTrait.hpp" />
+    <ClInclude Include="include\cym\parser\CymCodeGen.hpp" />
     <ClInclude Include="include\cym\parser\CymParser.hpp" />
     <ClInclude Include="include\cym\parser\CymLexer.hpp" />
     <ClInclude Include="include\cym\utils\CymDoubleKeyMap.hpp" />
@@ -45,6 +47,7 @@
     <ClInclude Include="include\cym\vm\CymVM.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="example\target.cym" />
     <None Include="example\test.cym" />
     <None Include="test.cym" />
   </ItemGroup>

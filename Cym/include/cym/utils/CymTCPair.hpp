@@ -7,10 +7,8 @@ namespace cym {
 	struct Pair {
 		T first;
 		Y second;
-		Pair(const T &f, const Y &s) : first(f), second(s) {
-
-		}
-		Pair(T &&f, Y &&s) : first(f), second(s) {
+		template<class T1,class Y1>
+		Pair(T1 &&f, Y1 &&s) : first(std::forward<T1>(f)), second(std::forward<Y1>(s)) {
 
 		}
 	};

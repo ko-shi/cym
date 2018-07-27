@@ -10,27 +10,37 @@
 #endif
 
 namespace cym {
-	struct ClassDef;
 
 	struct Trait;
-
-	struct Specific {
-		ClassDef* cls_id;
+	struct FuncTrait;
+	struct RefTrait {
+		StrView name;// other trait's name
 	};
 
-	struct SubType {
-		Vector<Trait> req;
+	struct ClassTrait {
+		Vector<Pair<Str, Trait>> mem_params;
+		Vector<FuncTrait> mem_funcs;
+
+		Vector<ClassTrait> inner_cls;
 	};
 
 	struct FuncTrait {
 		StrView name;
 		std::unique_ptr<Trait> ret;
-		Vector<Trait> args;
+		Vector<Pair<StrView,Trait>> args;
 	};
 
 	struct Trait {
-		using T = Variant<Specific, SubType, FuncTrait>;
+		using T = Variant<RefTrait, ClassTrait, FuncTrait>;
 		T trait;
+		Trait() = default;
+		Trait(const Trait&) = default;
+		Trait(Trait &&) = default;
+		
+		template<class Y>
+		Trait(Y &&x) : trait(std::forward<Y>(x)) {
+
+		}
 	};
 }
 #endif
