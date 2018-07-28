@@ -7,7 +7,6 @@
 
 namespace cym {
 
-	using ByteCode = Vector<ByteCodeFunc>;// [0] is main function
 
 
 

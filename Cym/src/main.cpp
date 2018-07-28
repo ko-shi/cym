@@ -19,30 +19,7 @@ int main() {
 		parser.addCode(toU16String(input));
 	}
 	const auto start = now();
-	//parser.parse();
-	ByteCode byte_code = {
-		ByteCodeFunc{ {
-				OpUnion(OpBinaryOp{ IFBinOp::ASSIGN,0 }),
-				OpUnion(OpPushValue{ VariableUnit(Int(20)) }),
-				OpUnion(OpCall{}),
-				OpUnion(OpBinaryOp{ IFBinOp::PLUS,1 }),
-				OpUnion(OpPushPreCall{ 1}),
-				OpUnion(OpPushVariable{ 0 }),
-				OpUnion(OpPushValue{ VariableUnit(Int(40)) }),
-				OpUnion(OpCall{}),
-				OpUnion(OpPushValue{VariableUnit(Int(60))}),
-				OpUnion(OpTerminate{})
-		},2 } ,
-		ByteCodeFunc{ {
-				OpUnion(OpReturnBinaryOp{ IFBinOp::PLUS }),
-				OpUnion(OpPushVariable{ 0 }),
-				OpUnion(OpPushVariable{ 1 }),
-				OpUnion(OpCall{}),
-				OpUnion(OpEndOfReturnFunc{})
-		},2 }
-	};
-	CymVM vm(std::move(byte_code));
-	vm.run();
+	parser.parse();
 	const auto finish = now();
 	std::cout << parser.ast_.toStr() << std::endl;
 	std::cout << getNs(finish - start) << std::endl;

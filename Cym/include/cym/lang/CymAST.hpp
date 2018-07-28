@@ -159,30 +159,32 @@ namespace cym {
 	struct ClassDef;
 
 	struct FuncDef {
-		Str name;
 		FIndexMap<StrView> param_id;
 		// bool unreferable = false;
 		Vector<Pair<StrView, Trait>> args;
 		Trait ret_rest;
 		Vector<std::unique_ptr<ASTBase>> order;
 
-		Vector<FuncDef> inner_func;
-		Vector<ClassDef> inner_cls;
+		Map<Str,FuncDef> inner_func;
+		Map<Str,ClassDef> inner_cls;
 
 		Str toStr()const{
-			Str temp;
+			Str temp = u"ast = ";
 			for (const auto &i : order) {
 				temp += i->toStr();
 			}
-			return Str(u"name = ") + name + Str(u"\n")
-				+ Str(u"ast = ") + temp;
+			temp += u"\ninner func:\n";
+			for (const auto &i : inner_func) {
+				temp += u"name = " + i.first + u"\n";
+				temp += i.second.toStr() + u"\n";
+			}
+			return temp;
 		}
 	};
 	struct ClassDef {
 		Size cls_id;
-		Str name;
-		Vector<Pair<Str, Trait>> mem_params;
-		Vector<FuncDef> mem_funcs;
+		Map<Str, Trait> mem_params;
+		Map<Str, FuncDef> mem_funcs;
 
 		Vector<std::unique_ptr<ClassDef>> inner_cls;
 	};

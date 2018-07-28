@@ -96,7 +96,7 @@ namespace cym {
 				return num_part;
 			}
 		}
-		const auto specials = {u'(',u'[',u'{',u'.',u' ',u':'};
+		const auto specials = {u'(',u'[',u'{',u'.',u' ',u':',u','};
 		const auto name_part = takeWhile(word, [=](Char c) {return std::none_of(specials.begin(), specials.end(), [=](Char c2){return c2 == c; });});
 		const auto sign_part = getRemainedStr(str, name_part);
 

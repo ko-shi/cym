@@ -23,7 +23,7 @@ namespace cym {
 		Vector<ErrorMessage> error_;
 		FuncDef ast_;
 	public:
-		Parser() : ast_{ u"main"} {
+		Parser() : ast_{} {
 			scope_.emplace_back(&ast_);
 		}
 		void addCode(const Str &code) {
@@ -40,8 +40,11 @@ namespace cym {
 			}
 			code_.emplace_back(code);
 		}
-		Size scopeDepth(Size line) {
-			return countStr(code_[line], single_indent_);
+		Size countDepth(StrView line) {
+			return countStr(line, single_indent_);
+		}
+		Size formerDepth() {
+			return scope_.size() - 1;
 		}
 		const Scope& lastScope() const {
 			return scope_.back();
@@ -51,6 +54,9 @@ namespace cym {
 		}
 		Trait parseTrait(StrView) {
 			return Trait(RefTrait{ u"any" });
+		}
+		void addError(ErrorMessage::Kind kind, StrView point, const Str &m = Str(u"")) {
+			error_.emplace_back(kind, line_num_, distance(line_, point), point);
 		}
 		void parse() {
 			for (auto &&s : code_) {
@@ -70,6 +76,17 @@ namespace cym {
 			}
 		}
 		void parseLine() {
+			const Size depth = countDepth(line_);
+			const Size former_depth = formerDepth();
+			if (former_depth == depth) {
+				// Nothing to do
+			}
+			else if (former_depth > depth) {
+				for (Size i = 0; i < former_depth - depth;i++)scope_.pop_back();
+			}
+			else {
+				addError(ErrorMessage::TOO_MUCH_INDENT, line_.substr(0, depth * single_indent_.size()));
+			}
 			auto first = takeToken(line_);
 			auto second = takeNextToken(line_, first);
 			auto third = takeNextToken(line_, second);
@@ -91,10 +108,6 @@ namespace cym {
 			return temp == table.end() ? -1 : temp->second;
 		}
 		void caseDefineVar(StrView str,StrView name,StrView trait,StrView initializer) {
-			if (lastScope().index() != FUNC_SCOPE) {
-				error_.emplace_back(ErrorMessage::DEFINED_VARIABLE_IN_CLASS_SCOPE, line_num_, distance(str, trait), str.substr(trait.size()));
-				return;
-			}
 			auto &func = *std::get<FUNC_SCOPE>(lastScope());
 
 			func.param_id.emplace(name);
@@ -108,7 +121,6 @@ namespace cym {
 			const auto args = listArgs(declaration);
 
 			FuncDef new_func{};
-			new_func.name = Str(name);
 			for (const auto &arg : args) {
 				const auto first = takeToken(arg);
 				const auto second = takeNextToken(arg, first);
@@ -119,10 +131,9 @@ namespace cym {
 				else {
 					new_func.args.emplace_back(first, parseTrait(u"any"));
 				}
+				new_func.param_id.emplace(first);
 			}
-			
-			func.inner_func.emplace_back(std::move(new_func));
-			scope_.emplace_back(&func.inner_func.back());
+			scope_.emplace_back(&func.inner_func.emplace(name,std::move(new_func)).first->second);
 		}
 		std::unique_ptr<ASTBase> parseExpr(StrView expr,Vector<std::unique_ptr<ASTBase>> &&former,Size prev_priority = -1) {
 
@@ -188,7 +199,7 @@ namespace cym {
 			}
 			hind = removeSpace(hind);
 			if (hind.empty()) {
-				if (former.size() % 2 == 0) {
+				if (former.size() % 2 == 0 && !former.empty()) {
 					error_.emplace_back(ErrorMessage::ENDED_WITH_INFIX, line_num_, distance(line_, token), token);
 					former.pop_back();
 				}

@@ -15,7 +15,8 @@ namespace cym {
 			BEGUN_WITH_INFIX,
 			DEFINED_VARIABLE_IN_CLASS_SCOPE,
 			DEFINED_FUNCTION_IN_CLASS_SCOPE,
-			WRITTEN_EXPRESSION_IN_CLASS_SCOPE
+			WRITTEN_EXPRESSION_IN_CLASS_SCOPE,
+			TOO_MUCH_INDENT
 		};
 		const Kind kind;
 		const Size line;
@@ -34,7 +35,8 @@ namespace cym {
 				u"Begun with infix",
 				u"Defined variable in class scope",
 				u"Defined function in class scope",
-				u"Written expression in class scope"
+				u"Written expression in class scope",
+				u"Too much indent"
 			};
 			return table[kind];
 		}

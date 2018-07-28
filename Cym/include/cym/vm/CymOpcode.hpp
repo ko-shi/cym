@@ -120,6 +120,9 @@ namespace cym {
 		Size size;// num of variables
 	};
 
+	using ByteCode = Vector<ByteCodeFunc>;// [0] is main function
+
+
 	constexpr auto s = sizeof(OpUnion);
 	constexpr auto s2 = sizeof(OpPushValue);
 }
