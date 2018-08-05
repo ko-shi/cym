@@ -11,9 +11,9 @@ namespace cym {
 	class CodeGen {
 		ByteCode byte_code_;
 		FuncDef ast_;
-		DoubleKeyMap<Pair<Str,InstancedType>,ByteCodeFunc> defined_operators_;
+		DoubleKeyMap<FuncIdentifier,ByteCodeFunc> defined_operators_;
 		CodeGen(FuncDef &&a) : ast_(std::move(a)) {
-
+			defined_operators_.emplace(FuncIdentifier(u"+", InstancedType{ FunctionType{} });
 		}
 		FuncDef* findFunc(const Vector<Scope> &s,const Str &name) {
 			// TODO: オーバーロード対応
