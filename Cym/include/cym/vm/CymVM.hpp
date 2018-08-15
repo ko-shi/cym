@@ -33,7 +33,7 @@ namespace cym {
 				const auto com = *itr;
 				const auto opcode = static_cast<OpCode>(com.index());
 				auto &func = stack_.back();
-				const bool is_prim = func.binop != IFBinOp::USER;
+				const bool is_prim = func.binop != BinOp::USER;
 				switch (static_cast<OpCode>(com.index()))
 				{
 				case OpCode::BINARYOP: {
@@ -63,7 +63,7 @@ namespace cym {
 					const auto opland = com.as<OpCode::PUSHVARIABLE>();
 					if (stack_.size() > 0) {
 						const auto former = stack_[stack_.size() - 2];
-						const auto val = former.binop == IFBinOp::USER ?
+						const auto val = former.binop == BinOp::USER ?
 							former.registers[opland.num]
 							: former.primreg.registers[opland.num];
 						if (is_prim) {
@@ -85,10 +85,10 @@ namespace cym {
 					if (is_prim) {
 						const auto regs = func.primreg.registers;
 						switch (func.binop) {
-						case IFBinOp::ASSIGN:
+						case BinOp::ASSIGN:
 							*func.caller = regs[0];
 							break;
-						case IFBinOp::PLUS:
+						case BinOp::PLUS:
 							func.caller->data.i = regs[0].data.i + regs[1].data.i;
 							break;
 						}

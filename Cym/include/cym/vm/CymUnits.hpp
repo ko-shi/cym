@@ -31,7 +31,7 @@ namespace cym {
 			data.d = *static_cast<double*>(static_cast<void*>(&v));
 		}
 	};
-	enum class IFBinOp{
+	enum class BinOp{
 		USER,
 		ASSIGN,// following are primitive
 		PLUS
@@ -40,7 +40,7 @@ namespace cym {
 		VariableUnit registers[2];
 	};
 	struct FunctionUnit {
-		IFBinOp binop;
+		BinOp binop;
 		const ByteCodeFunc *byte_code;
 		Vector<VariableUnit> registers;
 		Size pushed;
@@ -54,9 +54,9 @@ namespace cym {
 
 
 		const OpUnion *itr;
-		FunctionUnit(const ByteCodeFunc *b, Size s, VariableUnit *c) : binop(IFBinOp::USER), byte_code(b), registers(s), pushed(0), caller(c) {
+		FunctionUnit(const ByteCodeFunc *b, Size s, VariableUnit *c) : binop(BinOp::USER), byte_code(b), registers(s), pushed(0), caller(c) {
 		}
-		FunctionUnit(IFBinOp i, VariableUnit *c) : binop(i),pushed(0), caller(c) {
+		FunctionUnit(BinOp i, VariableUnit *c) : binop(i),pushed(0), caller(c) {
 
 		}
 	};

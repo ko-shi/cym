@@ -12,7 +12,7 @@ namespace cym {
 
 	// Calcrating // // Kind like PreCall
 	struct OpBinaryOp {
-		IFBinOp op;
+		BinOp op;
 		Uint num;// dest
 	};
 
@@ -60,7 +60,7 @@ namespace cym {
 		Size func;
 	};
 	struct OpReturnBinaryOp {
-		IFBinOp op;
+		BinOp op;
 	};
 	struct OpEndOfReturnFunc {
 

@@ -6,15 +6,18 @@
 
 namespace cym {
 	struct InstancedType;
+	struct VoidType {
+
+	};
 	struct IntType{
 
 	};
 	struct ArrayType{
-		InstancedType* type;
+		InstancedType *type;
 	};
 	struct ObjectType{
 		Map<StrView, InstancedType*> member_func;// does not influence size() but does operator==()
-		Map<StrView, InstancedType*> members;
+		Vector<Pair<StrView, InstancedType*>> members;
 	};
 	struct FunctionType{
 		InstancedType* return_type;
@@ -22,6 +25,9 @@ namespace cym {
 	};
 
 	struct SizeOverload {
+		Size operator()(const VoidType &t) {
+			return 0;
+		}
 		Size operator()(const IntType &t) {
 			return 4;
 		}
@@ -39,38 +45,11 @@ namespace cym {
 			return 4;// ByteCode's index
 		}
 	};
-	struct EqualToOverload {
-		bool operator()(const IntType &t) {
-			return true;
-		}
-		bool operator()(const ArrayType &t) {
-			return std::visit(EqualToOverload(), t.type->type);
-		}
-		bool operator()(const ObjectType &t) {
-			for (auto &i : t.members) {
-				if (!std::visit(EqualToOverload(), i.second->type)) {
-					return false;
-				}
-			}
-			return true;
-		}
-		bool operator()(const FunctionType &t) {
-			for (auto &i : t.args) {
-				if (!std::visit(EqualToOverload(), i->type)) {
-					return false;
-				}
-			}
-			return std::visit(EqualToOverload(), t.return_type->type);
-		}
-	};
 	struct InstancedType {
-		using T = Variant<IntType, ArrayType, ObjectType, FunctionType>;
+		using T = Variant<VoidType, IntType, ArrayType, ObjectType, FunctionType>;
 		T type;
 		Size size()const {
 			return std::visit(SizeOverload(), type);
-		}
-		bool operator==(const InstancedType &t) const{
-			return std::visit(EqualToOverload(), t.type);
 		}
 	};
 
@@ -78,7 +57,7 @@ namespace cym {
 
 	struct FuncIdentifier {
 		Str name;
-		InstancedType type;
+		InstancedType *type;
 		FuncIdentifier() = default;
 		FuncIdentifier(FuncIdentifier&&) = default;
 		FuncIdentifier(const FuncIdentifier&) = default;
