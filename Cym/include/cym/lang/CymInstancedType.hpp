@@ -56,18 +56,18 @@ namespace cym {
 
 
 	struct FuncIdentifier {
-		Str name;
-		InstancedType *type;
+		const Str name;
+		const FuncDef *def;
+		const InstancedType *type;
 		FuncIdentifier() = default;
 		FuncIdentifier(FuncIdentifier&&) = default;
 		FuncIdentifier(const FuncIdentifier&) = default;
 
-		template<class T>
-		FuncIdentifier(const Str n, T && t) : name(n), type{ std::forward<T>(t) } {
+		FuncIdentifier(const Str &name,const FuncDef *def, const InstancedType *type) : name(name), def(def), type(type) {
 
 		}
 		bool operator==(const FuncIdentifier &f) const{
-			return name == f.name && type == f.type;
+			return def == f.def && type == f.type;
 		}
 	};
 }
