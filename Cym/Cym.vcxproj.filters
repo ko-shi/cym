@@ -113,9 +113,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="test.cym">
-      <Filter>headers</Filter>
-    </None>
     <None Include="example\test.cym">
       <Filter>examples</Filter>
     </None>

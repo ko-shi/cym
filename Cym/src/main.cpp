@@ -21,7 +21,7 @@ int main() {
 	const auto start = now();
 	parser.parse();
 	const auto finish = now();
-	std::cout << parser.ast_.toStr() << std::endl;
+	std::cout << parser.main_class_.toStr() << std::endl;
 	std::cout << getNs(finish - start) << std::endl;
 	return 0;
 }

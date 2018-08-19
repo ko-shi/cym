@@ -1,6 +1,5 @@
-func plus(a, b)
-	ret a + b
+data Person
+	age : Int
+	gender : Gender
 
-func plus(a, b)
-
-f(x) = x * x
+	new()

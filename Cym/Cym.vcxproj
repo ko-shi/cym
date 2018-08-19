@@ -49,7 +49,6 @@
   <ItemGroup>
     <None Include="example\target.cym" />
     <None Include="example\test.cym" />
-    <None Include="test.cym" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp" />

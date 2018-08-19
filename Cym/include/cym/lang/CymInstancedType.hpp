@@ -58,16 +58,16 @@ namespace cym {
 	struct FuncIdentifier {
 		const Str name;
 		const FuncDef *def;
-		const InstancedType *type;
+		const Vector<InstancedType*> arg_type;
 		FuncIdentifier() = default;
 		FuncIdentifier(FuncIdentifier&&) = default;
 		FuncIdentifier(const FuncIdentifier&) = default;
 
-		FuncIdentifier(const Str &name,const FuncDef *def, const InstancedType *type) : name(name), def(def), type(type) {
+		FuncIdentifier(const Str &name,const FuncDef *def, const Vector<InstancedType*> arg_type) : name(name), def(def), arg_type(type) {
 
 		}
 		bool operator==(const FuncIdentifier &f) const{
-			return def == f.def && type == f.type;
+			return def == f.def && arg_type == f.arg_type;
 		}
 	};
 }

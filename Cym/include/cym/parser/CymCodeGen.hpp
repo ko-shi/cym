@@ -12,16 +12,16 @@ namespace cym {
 	class CodeGen {
 		ByteCode byte_code_;
 		FuncDef ast_;
-		Set<InstancedType> inst_type_;
-		DoubleKeyMap<FuncIdentifier,ByteCodeFunc> defined_operators_;
+		Map<InstancedType,Str> inst_type_;
+		DoubleKeyMap<FuncIdentifier,Pair<const InstancedType*,ByteCodeFunc>> defined_operators_;
 		CodeGen(FuncDef &&a) : ast_(std::move(a)) {
 			// primitive type
-			inst_type_.emplace(VoidType());
-			inst_type_.emplace(IntType());
+			inst_type_.emplace(u"Void", VoidType());
+			inst_type_.emplace(u"Int", IntType());
 			const auto int_type = findType(IntType());
 
 
-			addOperator(u"+", nullptr, FunctionType{ int_type,{int_type,int_type} }, ByteCodeFunc{ {
+			addOperator(FuncIdentifier(u"+", nullptr, { int_type,int_type }), int_type, ByteCodeFunc{ {
 					OpUnion(OpPushVariable{ 0 }),
 					OpUnion(OpPushVariable{ 1 }),
 					OpUnion(OpBinaryOp{BinOp::PLUS}),
@@ -29,29 +29,17 @@ namespace cym {
 					OpUnion(OpReturnBinaryOp{})
 				} ,2});
 		}
-		Vector<Size> proposeFunction(const Str &name,const Vector<InstancedType*> &args) {
-			Vector<Size> list;
-			for (const auto &func : defined_operators_.link) {
-				if (func.first.name == name && std::get<FunctionType>(func.first.type->type).args == args) {
-					list.push_back(func.second);
-				}
-			}
-			return list;
-		}
-		InstancedType* makeFuncTypeFromList() {
-
-		}
 		template<class T>
 		InstancedType* findType(T && type) {
 			return &inst_type_.emplace(std::forward<T>(type)).first;
 		}
-		ByteCodeFunc& addOperator(const Str &name, const FuncDef* def, const FunctionType &type_decl, const ByteCodeFunc &code) {
-			const auto ret = inst_type_.emplace(std::make_shared<InstancedType>(type_decl));
-			defined_operators_.emplace(FuncIdentifier(name, def, &*ret.first),code);
-			return defined_operators_[FuncIdentifier(name, def, &*ret.first)];
+
+		void addOperator(const FuncIdentifier &funcid, const InstancedType* ret_t,const ByteCodeFunc &code) {
+			defined_operators_.emplace(funcid, makePair(ret_t,code));
 		}
-		const FuncDef& findFunc(const Vector<Scope> &s,const Str &name, const Vector<InstancedType*> &arg_types) {
+		const Vector<FuncDef*> findFunc(const Vector<Scope> &s,const Str &name, const Vector<InstancedType*> &arg_types) {
 			// TODO: オーバーロード対応
+			auto list = Vector<FuncDef*>();
 			for (auto i = s.rbegin(); i != s.rend(); i++) {
 				if (i->index() == ScopeKind::FUNC_SCOPE) {
 					const auto &func = std::get<ScopeKind::FUNC_SCOPE>(*i);
@@ -60,18 +48,21 @@ namespace cym {
 						for (const auto &arg : found.args) {
 							//arg.second
 						}
-						return func->inner_func[name];
+						// narrow
+						list.push_back(&func->inner_func[name]);
 					}
 				}
 			}
+			return list;
 		}
 		void generate() {
 			const auto void_type = findType(VoidType());
-			const auto main = doGenerate(ast_, { &ast_ });
+			const auto main = doGenerate(FuncIdentifier(u"main@", &ast_, {void_type}), { &ast_ });
 			//addOperator(u"main@", FunctionType{ void_type,{} });
 		}
-		Pair<InstancedType*,ByteCode> doGenerate(const FuncDef &ast, Vector<Scope> stratum) {// copy cnstruct
-			for (const auto &i : ast.order) {
+		Pair<InstancedType*,ByteCode> doGenerate(const FuncIdentifier &funcid, Vector<Scope> stratum) {// copy cnstruct
+			
+			for (const auto &i : funcid.def->order) {
 				consignAST(i.get(), stratum);
 			}
 		}
@@ -87,8 +78,7 @@ namespace cym {
 			}
 			}
 		}
-		Pair<InstancedType*,ByteCodeFunc> genCallFunc(const Vector<Scope> &stratum, const ASTCallFunc &ast) {
-			ByteCodeFunc code{};
+		Vector<Pair<InstancedType*,ByteCodeFunc>> genCallFunc(const Vector<Scope> &stratum, const ASTCallFunc &ast) {
 			Vector<InstancedType*> args(ast.args.size());
 			Vector<ByteCodeFunc> ops(ast.args.size());
 			for (auto &arg : ast.args) {
@@ -99,8 +89,17 @@ namespace cym {
 			
 			//defined_operators_[FuncIdentifier{n}]
 
-			const auto &func = findFunc(stratum, ast.name);
-			func.
+			auto list = Vector<Pair<InstancedType*, ByteCodeFunc>>();
+			const auto func = findFunc(stratum, ast.name, args);
+			for (const auto f : func) {
+				const auto id = FuncIdentifier(ast.name, f, args);
+				if (defined_operators_.link.count(id)) {
+					defined_operators_[id]
+				}
+				else {
+
+				}
+			}
 		}
 	};
 }

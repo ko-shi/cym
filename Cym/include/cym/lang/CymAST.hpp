@@ -7,7 +7,7 @@
 #include<cym/utils/CymForwardIndexMap.hpp>
 #include<cym/utils/string/CymStringConverter.hpp>
 
-#include<variant>
+#include<map>
 
 #ifdef ERROR
 #	undef ERROR
@@ -47,26 +47,6 @@ namespace cym {
 		}
 		virtual ASTId id() const override {
 			return ASTId::NUM;
-		}
-	};
-	struct ASTDefVar : ASTBase {
-		Str name;
-		Str trait;
-		Size index;
-		std::unique_ptr<ASTBase> initializer;
-		ASTDefVar(StrView n,StrView r,Size i) : name(n),trait(r), index(i) {
-
-		}
-		virtual Str toStr()const override {
-			return Str(u"Define Variable{\n")
-				+ Str(u"name = \"") + name + Str(u"\"\n")
-				+ Str(u"trait = ") + trait + Str(u"\n")
-				+ Str(u"index = ") + toU16String(index) + Str(u"\n")
-				+ Str(u"initializer = ") + initializer->toStr() + Str(u"\n")
-				+ Str(u"}\n");
-		}
-		virtual ASTId id()const override {
-			return ASTId::DEF_VAR;
 		}
 	};
 	struct ASTVar : ASTBase {
@@ -155,49 +135,96 @@ namespace cym {
 		}
 	};
 
-	struct FuncDef;
-	struct ClassDef;
 
-	struct FuncDef {
-		FIndexMap<StrView> param_id;
-		// bool unreferable = false;
-		Vector<Pair<StrView, Trait>> args;
-		Trait ret_rest;
-		Vector<std::unique_ptr<ASTBase>> order;
-
-		Map<Str,FuncDef> inner_func;
-		Map<Str,ClassDef> inner_cls;
-
-		Str toStr()const{
-			Str temp = u"ast = ";
-			for (const auto &i : order) {
-				temp += i->toStr();
-			}
-			temp += u"\ninner func:\n";
-			for (const auto &i : inner_func) {
-				temp += u"name = " + i.first + u"\n";
-				temp += i.second.toStr() + u"\n";
-			}
-			return temp;
+	enum class SentenceId {
+		DEFINE_VAR,
+		CALL_FUNC,
+		RETURN
+	};
+	struct SentenceBase {
+		virtual SentenceId id()const = 0;
+		virtual Str toStr()const = 0;
+		virtual ~SentenceBase() {
 		}
 	};
-	struct ClassDef {
-		Size cls_id;
-		Map<Str, Trait> mem_params;
-		Map<Str, FuncDef> mem_funcs;
+	struct SentenceDefineVariable : SentenceBase{
 
-		Vector<std::unique_ptr<ClassDef>> inner_cls;
+		Str name;
+		Str trait;
+		Size index;
+		std::unique_ptr<ASTBase> initializer;
+		SentenceDefineVariable(StrView n, StrView r, Size i, std::unique_ptr<ASTBase> &&init) : name(n), trait(r), index(i), initializer(std::move(init)) {
+
+		}
+		virtual Str toStr()const override {
+			return Str(u"Define Variable{\n")
+				+ Str(u"name = \"") + name + Str(u"\"\n")
+				+ Str(u"trait = ") + trait + Str(u"\n")
+				+ Str(u"index = ") + toU16String(index) + Str(u"\n")
+				+ Str(u"initializer = ") + initializer->toStr() + Str(u"\n")
+				+ Str(u"}\n");
+		}
+		virtual SentenceId id()const override {
+			return SentenceId::DEFINE_VAR;
+		}
+	};
+	struct SentenceNormal : SentenceBase {
+		std::unique_ptr<ASTBase> ast;
+		virtual Str toStr()const override {
+			return ast->toStr();
+		}
+		virtual SentenceId id()const override {
+			return SentenceId::DEFINE_VAR;
+		}
+	};
+
+
+
+	struct ClassDef {
+		bool is_functor;
+		Str name;
+		std::multimap<Str, ClassDef> member;
+
+		FIndexMap<StrView> param_id;
+		Vector<Pair<StrView, Trait>> args;
+		Trait ret_trait;
+		Vector<std::unique_ptr<SentenceBase>> order;
+
+		ClassDef() = default;
+		ClassDef(const ClassDef &) = default;
+		ClassDef(ClassDef &&) = default;
+
+		ClassDef(const Str &name) : is_functor(false), name(name) {
+
+		}
+		ClassDef(const Str &name,const Vector<Pair<StrView,Trait>> &args,const Trait &ret) : is_functor(true), name(name), args(args), ret_trait(ret) {
+
+		}
+		Str toStr()const {
+			if (!is_functor) {
+				return Str(u"field : name = ") + name;
+			}
+			Str o;
+			for (const auto &i : order) {
+				o += i->toStr();
+			}
+			Str m;
+			for (const auto &i : member) {
+				m += Str(u"{\n name = ") + i.first + u"\n" + i.second.toStr() + u"}\n";
+			}
+			return 
+				Str(u"{\n functor : name = ") + name
+				+ u"\norder : {" + o
+				+ u"\n}\nmember : {" + m + u"}"
+				+ u"\n}\n";
+		}
 	};
 
 	enum ScopeKind {
 		FUNC_SCOPE,
-		CLASS_SCOPE
+		CLASS_DEF_SCOPE,
+		IF_SCOPE
 	};
-	using Scope = Variant<
-		FuncDef*,
-		ClassDef*
-	>;
-	
 }
 
 #endif
