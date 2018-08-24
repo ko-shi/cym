@@ -183,6 +183,8 @@ namespace cym {
 	struct ClassDef {
 		bool is_functor;
 		Str name;
+		const ClassDef* parent;
+
 		std::multimap<Str, ClassDef> member;
 
 		FIndexMap<StrView> param_id;
@@ -194,10 +196,10 @@ namespace cym {
 		ClassDef(const ClassDef &) = default;
 		ClassDef(ClassDef &&) = default;
 
-		ClassDef(const Str &name) : is_functor(false), name(name) {
+		ClassDef(const Str &name, const ClassDef* parent) : is_functor(false), name(name),parent(parent) {
 
 		}
-		ClassDef(const Str &name,const Vector<Pair<StrView,Trait>> &args,const Trait &ret) : is_functor(true), name(name), args(args), ret_trait(ret) {
+		ClassDef(const Str &name,const Vector<Pair<StrView,Trait>> &args,const Trait &ret,const ClassDef* parent) : is_functor(true), name(name), args(args), ret_trait(ret), parent(parent) {
 
 		}
 		Str toStr()const {

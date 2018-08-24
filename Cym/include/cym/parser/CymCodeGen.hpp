@@ -9,19 +9,35 @@
 #include<cym/utils/CymDoubleKeyMap.hpp>
 
 namespace cym {
+	struct InstancedFunction {
+		InstancedType* ret_type;
+		Vector<InstancedType*> param_type;
+		ByteCodeFunc code;
+		InstancedFunction() = default;
+		InstancedFunction(InstancedFunction&&) = default;
+		InstancedFunction(const InstancedFunction&) = default;
+		InstancedFunction(InstancedType* ret_type,Vector<InstancedType*> &&param_type,ByteCodeFunc &&code) : ret_type(ret_type),param_type(param_type),code(code){
+
+		}
+	};
+
 	class CodeGen {
 		ByteCode byte_code_;
-		FuncDef ast_;
 		Map<InstancedType,Str> inst_type_;
-		DoubleKeyMap<FuncIdentifier,Pair<const InstancedType*,ByteCodeFunc>> defined_operators_;
-		CodeGen(FuncDef &&a) : ast_(std::move(a)) {
+
+		DoubleKeyMap<FuncIdentifier,InstancedFunction> defined_operators_;
+
+		ClassDef main_class_;
+
+		CodeGen(ClassDef &&def) : main_class_(std::move(def)) {
 			// primitive type
 			inst_type_.emplace(u"Void", VoidType());
 			inst_type_.emplace(u"Int", IntType());
 			const auto int_type = findType(IntType());
 
+			const auto primitive_plus = &main_class_.member.equal_range(u"+").first->second;
 
-			addOperator(FuncIdentifier(u"+", nullptr, { int_type,int_type }), int_type, ByteCodeFunc{ {
+			addOperator(FuncIdentifier(primitive_plus, { int_type,int_type }), int_type, {int_type,int_type}, ByteCodeFunc{ {
 					OpUnion(OpPushVariable{ 0 }),
 					OpUnion(OpPushVariable{ 1 }),
 					OpUnion(OpBinaryOp{BinOp::PLUS}),
@@ -34,39 +50,30 @@ namespace cym {
 			return &inst_type_.emplace(std::forward<T>(type)).first;
 		}
 
-		void addOperator(const FuncIdentifier &funcid, const InstancedType* ret_t,const ByteCodeFunc &code) {
-			defined_operators_.emplace(funcid, makePair(ret_t,code));
+		void addOperator(const FuncIdentifier &funcid, InstancedType* ret_type, Vector<InstancedType*> &&param_type,ByteCodeFunc &&code) {
+			defined_operators_.emplace(funcid, InstancedFunction(ret_type,std::move(param_type),std::move(code)));
 		}
-		const Vector<FuncDef*> findFunc(const Vector<Scope> &s,const Str &name, const Vector<InstancedType*> &arg_types) {
+		const Vector<ClassDef*> findFunc(const Vector<ClassDef*> &stratum,const Str &name, const Vector<InstancedType*> &arg_types) {
 			// TODO: オーバーロード対応
-			auto list = Vector<FuncDef*>();
-			for (auto i = s.rbegin(); i != s.rend(); i++) {
-				if (i->index() == ScopeKind::FUNC_SCOPE) {
-					const auto &func = std::get<ScopeKind::FUNC_SCOPE>(*i);
-					if (func->inner_func.count(name)) {
-						const auto &found = func->inner_func[name];
-						for (const auto &arg : found.args) {
-							//arg.second
-						}
-						// narrow
-						list.push_back(&func->inner_func[name]);
-					}
-				}
+			auto list = Vector<ClassDef*>();
+			for (auto i = stratum.rbegin(); i != stratum.rend(); i++) {
+				const auto found = i->member.equal_range(name);
+				std::transform(found.first, found.second, list, [](auto a) { return &a.second; });
 			}
 			return list;
 		}
 		void generate() {
 			const auto void_type = findType(VoidType());
-			const auto main = doGenerate(FuncIdentifier(u"main@", &ast_, {void_type}), { &ast_ });
+			const auto main = ;
 			//addOperator(u"main@", FunctionType{ void_type,{} });
 		}
-		Pair<InstancedType*,ByteCode> doGenerate(const FuncIdentifier &funcid, Vector<Scope> stratum) {// copy cnstruct
-			
-			for (const auto &i : funcid.def->order) {
-				consignAST(i.get(), stratum);
-			}
+		Pair<InstancedType*,ByteCode> generateFunction(const FuncIdentifier &funcid, Vector<ClassDef*> stratum) {// copy cnstruct
+			Vector<InstancedType*> param_type(funcid.def->param_id.index);
+			std::copy(funcid.arg_type.begin(), funcid.arg_type.end(), param_type);
+
+			for(const auto sentence : )
 		}
-		Pair<InstancedType*,ByteCodeFunc> consignAST(ASTBase *ast,const Vector<Scope> &stratum) {// return value is returrn calue
+		Pair<InstancedType*,ByteCodeFunc> consignAST(ASTBase *ast,const Vector<ClassDef*> &stratum) {// return value is returrn calue
 			switch (ast->id()) {
 			case ASTId::CALL_FUNC: {
 				const auto func = dynamic_cast<ASTCallFunc*>(ast);
@@ -78,7 +85,7 @@ namespace cym {
 			}
 			}
 		}
-		Vector<Pair<InstancedType*,ByteCodeFunc>> genCallFunc(const Vector<Scope> &stratum, const ASTCallFunc &ast) {
+		Vector<Pair<InstancedType*,ByteCodeFunc>> genCallFunc(const Vector<ClassDef*> &stratum, const ASTCallFunc &ast) {
 			Vector<InstancedType*> args(ast.args.size());
 			Vector<ByteCodeFunc> ops(ast.args.size());
 			for (auto &arg : ast.args) {
@@ -92,7 +99,7 @@ namespace cym {
 			auto list = Vector<Pair<InstancedType*, ByteCodeFunc>>();
 			const auto func = findFunc(stratum, ast.name, args);
 			for (const auto f : func) {
-				const auto id = FuncIdentifier(ast.name, f, args);
+				const auto id = FuncIdentifier(, args);
 				if (defined_operators_.link.count(id)) {
 					defined_operators_[id]
 				}

@@ -23,7 +23,8 @@ namespace cym {
 		Vector<ErrorMessage> error_;
 		ClassDef main_class_;
 	public:
-		Parser() : main_class_(u"main_class", {}, Trait{}) {
+		Parser() : main_class_(u"main_class", {}, Trait{},nullptr) {
+			main_class_.member.emplace(u"+", ClassDef(u"+", { makePair(StrView(u"left"),Trait(u"Int")),makePair(StrView(u"right"),Trait(u"Int")) }, Trait(u"Int"), &main_class_));
 		}
 		void addCode(const Str &code) {
 			const auto head = removeSpace(code);
@@ -68,27 +69,26 @@ namespace cym {
 				}
 			}
 
-			Vector<ClassDef*> stratum{&main_class_};
-			parseFuncDefinition(u"func ()", makePair(code_.begin(), code_.end()),stratum);
+			parseFuncDefinition(u"func main()", makePair(code_.begin(), code_.end()),main_class_);
 		}
 
-		Itr parseLine(Itr line, Itr scope_end, Size depth, const Vector<ClassDef*> &stratum) {
+		Itr parseLine(Itr line, Itr scope_end, Size depth, ClassDef& def) {
 			const auto l = StrView(*line);
 			auto first = takeToken(l);
 			auto second = takeNextToken(l, first);
 			auto third = takeNextToken(l, second);
 			auto fourth = takeNextToken(l, third);
 			if (second == u":" && fourth == u"=") {
-				parseVariableDefinition(l, first,third,getRemainedStr(l,fourth),stratum);
+				parseVariableDefinition(l, first,third,getRemainedStr(l,fourth), def);
 				return line;
 			}
 			else if (second == u"=") {
-				parseVariableDefinition(l, first, StrView(), getRemainedStr(l, second),stratum);
+				parseVariableDefinition(l, first, StrView(), getRemainedStr(l, second), def);
 				return line;
 			}
 			else if (first == u"func" && getTokenKind(second) == TokenKind::FUNC) {
 				const auto range = cutOffScope(line + 1, scope_end, depth);
-				return parseFuncDefinition(l,range,stratum);
+				return parseFuncDefinition(l,range, def);
 			}
 			throw "not concerned sentence";
 			return Itr();
@@ -99,16 +99,15 @@ namespace cym {
 			const auto temp = table.find(infix);
 			return temp == table.end() ? -1 : temp->second;
 		}
-		void parseVariableDefinition(StrView str,StrView name,StrView trait,StrView initializer, const Vector<ClassDef*> &stratum) {
-			auto &scope = *stratum.back();
-			Size id = scope.param_id.emplace(str);
-			scope.order.emplace_back(std::make_unique<SentenceDefineVariable>(name, trait, id, parseExpr(initializer, stratum, {})));
+		void parseVariableDefinition(StrView str,StrView name,StrView trait,StrView initializer, ClassDef &def) {
+			Size id = def.param_id.emplace(str);
+			def.order.emplace_back(std::make_unique<SentenceDefineVariable>(name, trait, id, parseExpr(initializer, {}, def)));
 
 		}
-		Itr parseFuncDefinition(StrView declaration, Pair<Itr,Itr> range, const Vector<ClassDef*> &stratum) {
+		Itr parseFuncDefinition(StrView declaration, Pair<Itr,Itr> range, ClassDef& def) {
+			const Size depth = countDepth(declaration);
 			auto first = takeToken(declaration);
 			auto second = takeNextToken(declaration, first);
-
 			const auto name = toFuncName(second);
 			const auto args = listArgs(declaration);
 
@@ -120,15 +119,13 @@ namespace cym {
 				separated.emplace_back(arg_name, Trait(Str(trait)));
 			}
 
-			auto def_itr = stratum.back()->member.emplace(name, ClassDef(name, separated, Trait()));
-			auto new_stratum = stratum;
-			new_stratum.push_back(&def_itr->second);
+			def.member.emplace(name, ClassDef(name, separated, Trait(),&def));
 			for (auto itr = range.first; itr != range.second; itr++) {
-				itr = parseLine(itr, range.second, 0, new_stratum);
+				itr = parseLine(itr, range.second, depth, def);
 			}
 			return range.second;
 		}
-		std::unique_ptr<ASTBase> parseExpr(StrView expr,const Vector<ClassDef*> &stratum, Vector<std::unique_ptr<ASTBase>> &&former,Size prev_priority = -1) {
+		std::unique_ptr<ASTBase> parseExpr(StrView expr, Vector<std::unique_ptr<ASTBase>> &&former, ClassDef& def,Size prev_priority = -1) {
 
 			const auto token = takeToken(expr);
 			const auto kind = getTokenKind(token);
@@ -141,10 +138,9 @@ namespace cym {
 					former.emplace_back(new ASTNum(toInt(token)));
 					break;
 				case TokenKind::VARIABLE: {
-					auto &func = *stratum.back();
 
-					if (func.param_id.exist(token)) {
-						former.emplace_back(new ASTVar(Str(token), func.param_id[token]));
+					if (def.param_id.exist(token)) {
+						former.emplace_back(new ASTVar(Str(token), def.param_id[token]));
 					}
 					else {
 						// ñ¢é¿ëï : äOïîïœêîÇÃéÊìæ
@@ -157,13 +153,13 @@ namespace cym {
 					ASTCallFunc call_func;
 					call_func.name = toFuncName(token);
 					for (const auto arg : listArgs(token)) {
-						call_func.args.emplace_back(parseExpr(arg, stratum, {}));
+						call_func.args.emplace_back(parseExpr(arg, {},def));
 					}
 					former.emplace_back(new ASTCallFunc(std::move(call_func)));
 					break;
 				}
 				case TokenKind::EXPRESSION:
-					former.emplace_back(parseExpr(bracketContent(token), stratum, {}));
+					former.emplace_back(parseExpr(bracketContent(token), {},def));
 					break;
 				}
 			}
@@ -183,7 +179,7 @@ namespace cym {
 							error_.emplace_back(ErrorMessage::ENDED_WITH_INFIX, line_num_, distance(line_, token), token);
 						}
 						else {
-							former.back().reset(new ASTInfix(token, std::move(former.back()), parseExpr(next, stratum, {})));
+							former.back().reset(new ASTInfix(token, std::move(former.back()), parseExpr(next, {}, def)));
 							hind = takeNextToken(expr, next);
 						}
 					}
@@ -215,7 +211,7 @@ namespace cym {
 				error_.emplace_back(ErrorMessage::ENDED_WITH_INFIX, line_num_, distance(line_, expr), expr);
 				return std::make_unique<ASTBase>();
 			}
-			return parseExpr(hind, stratum, std::move(former), prev_priority);
+			return parseExpr(hind, std::move(former), def, prev_priority);
 		}
 
 	};
